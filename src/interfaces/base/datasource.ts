@@ -1,7 +1,8 @@
-export interface DataSource {
+export interface DataSource<T = any> {
   id?: number | string;
   value: string,
   text: string
+  original?: T;
 }
 
 export interface ToDataSource {

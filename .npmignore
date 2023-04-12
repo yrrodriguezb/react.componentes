@@ -1,0 +1,16 @@
+# folders
+node_modules/
+public/
+build/
+src/
+
+# files
+jest.config.ts
+tsconfig.json
+webpack.config.ts
+.gitignore
+
+
+# editor settings
+.vscode
+.editorconfig

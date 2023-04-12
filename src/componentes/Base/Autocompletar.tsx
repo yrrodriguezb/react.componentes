@@ -5,13 +5,14 @@ import InputAdornment from '@mui/material/InputAdornment';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
-import TextField from '@mui/material/TextField'
+import TextField, { TextFieldProps } from '@mui/material/TextField'
 import api from '../../utils/api';
 import useDebounce from '../../hooks/useDebounce';
 import useEvent from '../../hooks/useEvent';
 import { DataSource, ServiceProps } from '../../interfaces/base';
-import { defaultFunction, isEmptyObject, isNotEmptyObject, normalizeString } from '../../utils/fn';
+import { defaultFunction, isEmptyObject, isFunction, isNotEmptyObject, normalizeString } from '../../utils/fn';
 import { others as keyCodes } from '../../utils/keyboard';
+
 
 interface stateProps {
   dataSource: DataSource[],
@@ -20,61 +21,25 @@ interface stateProps {
   cursor: number;
 }
 
-interface IconsEndAdornmentProps {
-  showSearch: boolean;
-  showClear: boolean;
-  onClickClear: () => void;
-  children?: React.ReactNode;
-}
 
-interface InputTextProps {
-  fullWidth?: boolean;
-  name?: string;
-  placeholder?: string;
-}
+type OmitTextFieldProps = 'InputProps' | 'onChange' | 'onFocus' | 'onKeyDown' | 'onBlur' | 'type';
+
+interface InputTextProps extends Omit<TextFieldProps, OmitTextFieldProps> { }
 
 export interface AutocompletarProps {
   clearable?: boolean;
   data?: Array<DataSource | any>;
   delay?: number;
-  hideSearch?: boolean;
+  hideIcon?: boolean;
+  iconElement?: () => JSX.Element,
   id?: string;
   inputProps?: InputTextProps;
   onSelected?: (element: DataSource) => void;
   panelWidth?: number | string;
   renderText?: (o: DataSource | any) => string;
-  required?: boolean;
   returnObject?: boolean;
   service?: ServiceProps;
 }
-
-const SearchIcon = React.memo(() => {
-  return (
-    <InputAdornment position="end">
-      <Search color='secondary' />
-    </InputAdornment>
-  );
-})
-
-const ClearIcon = React.memo(({ onClick } : { onClick: () => void }) => {
-  return (
-    <InputAdornment position='end'>
-      <IconButton onClick={ onClick } component="label" size='small' tabIndex={ 1 } >
-        <Clear  />
-      </IconButton>
-    </InputAdornment>
-  );
-});
-
-const IconsEndAdornment = React.memo((props: IconsEndAdornmentProps) => {
-  return (
-    <React.Fragment>
-      { props.showClear && <ClearIcon  onClick={ props.onClickClear } /> }
-      { props.showSearch && <SearchIcon /> }
-      { props.children }
-    </React.Fragment>
-  )
-})
 
 const renderTextDefault = (obj: DataSource) => obj?.text;
 
@@ -94,16 +59,17 @@ const toMap = (data: any[]) => {
   return data || [];
 }
 
-const Autocompletar = (inProps: AutocompletarProps) => {
+export const Autocompletar = (inProps: AutocompletarProps) => {
   const {
     clearable = false,
     data = [],
     delay = 500,
-    hideSearch = false,
+    iconElement:MainIcon = () => <Search />,
+    hideIcon = false,
     id,
+    inputProps,
     onSelected = defaultFunction,
     renderText =  renderTextDefault,
-    required = false,
     returnObject = false,
     panelWidth,
     service,
@@ -115,7 +81,7 @@ const Autocompletar = (inProps: AutocompletarProps) => {
     dataText = 'text',
     dataValue = 'value',
     executeOnce = false,
-    searchParam = 'q',
+    searchParam = '',
     params = {},
     toDataSource
   } = (service || {}) as ServiceProps
@@ -137,6 +103,10 @@ const Autocompletar = (inProps: AutocompletarProps) => {
     if (executeOnce) {
       const { data:datos } = await api.get(urlService, { params });
       let dataSource: DataSource[] = toDataSource ? toDataSource(datos, returnObject) : mapDataSource(datos);
+      setState(s => ({ ...s, dataSource }));
+      setinitialData(dataSource);
+    } else if (data.length) {
+      let dataSource: DataSource[] = toMap(data);
       setState(s => ({ ...s, dataSource }));
       setinitialData(dataSource);
     }
@@ -166,8 +136,18 @@ const Autocompletar = (inProps: AutocompletarProps) => {
   }
 
   const resolveParams = (search: string) => {
+    if (isFunction(params)){
+      return (params as CallableFunction)(search);
+    }
+
+    let mainParam: any = {};
+
+    if (searchParam) {
+      mainParam[searchParam] = search;
+    }
+
     return {
-      [searchParam]: search,
+      ...mainParam,
       ...params
     }
   }
@@ -183,12 +163,16 @@ const Autocompletar = (inProps: AutocompletarProps) => {
       }
     }
     else {
-      setState({ ...state, value: pattern, cursor: -1 });
+      setState({ value: pattern, cursor: -1, dataSource: [], open: false });
     }
   }
 
+  const isHandleInitialData = () => {
+    return executeOnce || Boolean(data.length);
+  }
+
   const resolveData = () => {
-    return executeOnce ? initialData : data;
+    return isHandleInitialData() ? initialData : data;
   }
 
   const filter = (pattern: string, obj: DataSource) => {
@@ -202,6 +186,11 @@ const Autocompletar = (inProps: AutocompletarProps) => {
   const callback = (() => {
     if (isEmptyObject(service) || executeOnce) {
       return (pattern: string) => {
+        if (!pattern.trim().length) {
+          setState({ ...state, value: pattern, open: false, cursor: -1 });
+          return;
+        }
+
         const dataSource = resolveData();
         const found = !pattern.trim();
 
@@ -230,7 +219,16 @@ const Autocompletar = (inProps: AutocompletarProps) => {
     }
   }
 
+  const isActiveElementInListbox = (listboxRef: React.RefObject<HTMLUListElement>) => {
+    return listboxRef.current !== null && listboxRef.current.parentElement?.contains(document.activeElement);
+  }
+
   const handleInputBlur = (e: any) => {
+    if (isActiveElementInListbox(listRef)){
+      inputRef.current?.focus();
+      return;
+    }
+
     if (state.open) {
       setState({ ...state, open: false });
     }
@@ -307,7 +305,7 @@ const Autocompletar = (inProps: AutocompletarProps) => {
   }
 
   const handleInputFocus = (e: any) => {
-    if (executeOnce) {
+    if (isHandleInitialData()) {
       setState({ ...state, open: Boolean(state.dataSource.length) })
     }
   }
@@ -325,41 +323,81 @@ const Autocompletar = (inProps: AutocompletarProps) => {
       overflow: 'auto',
       boxShadow: 10,
       background: "#FFF",
-      zIndex: 'modal',
       position: 'absolute' as 'absolute',
+      zIndex: 'modal',
       width: Boolean(panelWidth) ? panelWidth : rootInputRef.current?.offsetWidth
     }
   }
 
-  const IsInputInValid = () => {
-    return required && !Boolean(normalizeString(state.value).length)
+  const getStylesRoot = () => {
+    return {
+      display: inputProps?.fullWidth ? 'block' : 'inline-block',
+      position: 'relative' as 'relative',
+    }
+  }
+
+  const ClearIcon = () => {
+    return (
+      <IconButton onClick={ clear } component="label" size='small' tabIndex={ -1 } >
+        <Clear  />
+      </IconButton>
+    );
+  }
+
+  const IconsEndAdornment = () => {
+    return (
+      <InputAdornment position='end'>
+        { clearable && <ClearIcon /> }
+        { !hideIcon && <MainIcon /> }
+      </InputAdornment>
+    )
+  }
+
+  const handleMouseDown = (e: any) => {
+    e.preventDefault();
+  }
+
+  const handleClick = (e: any) => {
+    const input = inputRef.current;
+
+    if (input) {
+      const selection = input.selectionEnd! - input.selectionStart!;
+      if (selection === 0) {
+        input.select()
+        const end = e.target.value.length;
+        input.setSelectionRange(end, end);
+      }
+    }
   }
 
   return (
-    <div id={ id }>
+    <div
+      id={ id }
+      style={ getStylesRoot() }
+      onMouseDown={ handleMouseDown }
+      onClick={ handleClick }
+    >
       <TextField
+        size="small"
         { ...props }
-        { ...props.inputProps }
+        { ...inputProps }
         autoComplete='off'
-        error={ IsInputInValid() }
         inputRef={ inputRef }
         InputProps={{
-          endAdornment: <IconsEndAdornment showClear={ clearable } showSearch={ !hideSearch } onClickClear={ clear } />,
+          endAdornment: <IconsEndAdornment />,
         }}
         onChange={ handleInputChange }
         onFocus={ handleInputFocus }
         onKeyDown={ handleKeyDown }
         onBlur={ handleInputBlur }
         ref={ rootInputRef }
-        size="small"
         type="text"
         value={ state.value }
-        variant="outlined"
       />
       {
         state.open  && (
           <Fade in unmountOnExit  >
-            <List ref={ listRef } dense sx={{ ...getSxPropsList() }} >
+            <List disablePadding ref={ listRef } dense sx={{ ...getSxPropsList() }} >
               {
                 state.dataSource.map((option, index) => {
                   return (

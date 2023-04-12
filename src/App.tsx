@@ -4,9 +4,37 @@ import { useState } from 'react';
 import TablaFiltroBase, { DatosEmitidos } from './componentes/Base/TablaFiltroBase'
 import TablaFiltro from'./componentes/Base/TablaFiltro';
 import Autocompletar, { AutocompletarProps } from './componentes/Base/Autocompletar'
-import countryList from './test/data/countries';
+import countryList from './tests/data/countries';
 import DataSource from './interfaces/base/datasource';
 import { Divider, Typography } from '@mui/material';
+import { ArrowDropDown } from '@mui/icons-material';
+
+export interface User {
+  id: number;
+  name: string;
+  username: string;
+  email: string;
+  address: Address;
+  phone: string;
+  website: string;
+  company: Company;
+}
+export interface Address {
+  street: string;
+  suite: string;
+  city: string;
+  zipcode: string;
+  geo: Geo;
+}
+export interface Geo {
+  lat: string;
+  lng: string;
+}
+export interface Company {
+  name: string;
+  catchPhrase: string;
+  bs: string;
+}
 
 
 function App() {
@@ -40,9 +68,15 @@ function App() {
 
   let autocopmpletarProps1: AutocompletarProps = {
     clearable: true,
-    hideSearch: true,
-    required: true,
     returnObject: true,
+    iconElement: () => <ArrowDropDown />,
+    inputProps: {
+      color: 'secondary',
+      size: 'medium',
+      label: 'Show',
+      focused: true,
+      placeholder: 'Buscar programa ...'
+    },
     service: {
       url:'https://api.tvmaze.com/search/shows/', // ?q=girls, excecuteOnce
       dataText:'name',
@@ -71,7 +105,10 @@ function App() {
       dataValue:'id',
       executeOnce: true
     },
-    onSelected: console.log,
+    returnObject: true,
+    onSelected: (d: DataSource<User>) => {
+      console.log(d.original)
+    },
     panelWidth: '400px'
   }
 
@@ -96,6 +133,8 @@ function App() {
       return "(obj: DataSource | any): string => {}"
     } else if (key === "data" && value != null) {
       return "[ ...countries ]"
+    } else if (key === "iconElement"){
+      return "() => JSX.Element"
     }
     return value
    }
@@ -136,7 +175,6 @@ function App() {
       <br />
 
       <Typography variant='h6'>Servicio que se ejecuta una vez</Typography>
-
       <Autocompletar
         { ...autocopmpletarProps2 }
       />

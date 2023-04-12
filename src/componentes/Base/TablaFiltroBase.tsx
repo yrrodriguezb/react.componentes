@@ -1,3 +1,4 @@
+import React from "react";
 import Box from "@mui/material/Box";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -15,6 +16,7 @@ import Dialog from "@mui/material/Dialog";
 import CloseIcon from '@mui/icons-material/Close';
 import { useState } from "react";
 import DataSource from "../../interfaces/base/datasource";
+
 
 
 export type DatosEmitidos = string | string[] | DataSource[];
@@ -102,7 +104,7 @@ export interface TablaFiltroBaseProps {
   title?: string,
 }
 
-const TablaFiltroBase = function TablaFiltroBase(inProps: TablaFiltroBaseProps) {
+export const TablaFiltroBase = function TablaFiltroBase(inProps: TablaFiltroBaseProps) {
   const defaultHeaders: string[] = ['Codigo', 'Descripción']
 
   const {
@@ -250,7 +252,6 @@ const TablaFiltroBase = function TablaFiltroBase(inProps: TablaFiltroBaseProps) 
 
 export default TablaFiltroBase;
 
-if (process.env.NODE_ENV !== "production") {
-  TablaFiltroToolbar.displayName = "AyfTablaFiltroToolbar";
-  TablaFiltroBase.displayName = "AyfTablaFiltroBase";
-}
+TablaFiltroToolbar.displayName = "AyfTablaFiltroToolbar";
+TablaFiltroBase.displayName = "AyfTablaFiltroBase";
+

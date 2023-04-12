@@ -13,7 +13,7 @@ export interface TablaFiltroProps extends Omit<TablaFiltroBaseProps, "data"> {
   dataText?: string
 }
 
-const TablaFiltro = (inProps: TablaFiltroProps) => {
+export const TablaFiltro = (inProps: TablaFiltroProps) => {
 
   const {
     urlService,

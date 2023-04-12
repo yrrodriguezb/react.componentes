@@ -21,6 +21,14 @@ export function isNotEmptyObject(obj: any) {
   return !isEmptyObject(obj)
 }
 
+export function isFunction(obj: any) {
+  return typeof obj === "function" && obj instanceof Function;
+};
+
+export function isNotFunction(obj: any) {
+  return !isFunction(obj);
+};
+
 export function defaultFunction(...args: any) { };
 
 export function normalizeString(str: string | number) {
@@ -34,6 +42,8 @@ export function normalizeString(str: string | number) {
 const utilsFunctions = {
   defaultFunction,
   isEmptyObject,
+  isFunction,
+  isNotFunction,
   isNotEmptyObject,
   isNotObject,
   isObject,

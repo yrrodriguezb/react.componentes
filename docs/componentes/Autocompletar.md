@@ -9,23 +9,16 @@ Componente que permite filtrar datos de tipo **DataSource** para mostralos en un
 | clearable      | boolean     | false    | Permite limpiar el input |
 | data           | DataSource  |          | Fuente de datos para ser renderizados.  |
 | delay          | number      | 500      | Tiempo de espere para realizar la carga de datos  |
-| hideSearch     | boolean     | false    | Oculta el icono de buscar |
+| iconElement    | () => JSX.Element | () => SearchIcon   | Icono al final del input según propiedad endAdornment de react mui |
+| hideIcon       | boolean     | false    | Oculta el icono al final del input |
 | id             | string      |          | Identificador elemento root  |
-| inputProps     | InputTextProps |       | Propiedades Input |
+| inputProps     | InputTextProps |       | Propiedades Input, extiende de la interface TextFieldProps omitiendo eventos que se usan en componente por defecto |
 | onSelected     | function    | () => {} | Funciona que se ejecuta con el valor seleccionado |
 | panelWidth     | number, string |       | Ancho panel de lista con los datos  |
 | renderText     | function    | (obj) => e.text | Función que renderiza el texto del elemento ListItem y el texto al seleccionar, por defecto el valor en service.dataValueText |
-| required       | boolean     | false    | Permite identificar si el input es válido |
 | returnObject   | boolean     | false    | Retorna objeto original cuando los datos provienen de un servicio HTTP en una propiedad llamada 'original'. |
 | service        | ServiceProps | {} | Propiedades del servicio HTTP. |
 
-## Input Text Props
-
-| Nombre         | Tipo        | Valor por defecto          | Descripción |
-|----------------|-------------|----------------------------|-------------|
-| fullWidth      | boolean     | false    | Controla el ancho que puede del input text  |
-| name           | string      |          | Nombre del input text  |
-| placeholder    | string      |          | Texto a mostrar en el input como placeholder |
 
 ## Service Props
 
@@ -34,12 +27,10 @@ Componente que permite filtrar datos de tipo **DataSource** para mostralos en un
 | executeOne     | boolean     | false    | Ejecutar el servicio una unica vez, cuando el componente es montado |
 | dataText       | string      | 'text'   | Texto a mostrar en el elemento de la lista |
 | dataValue      | string      | 'value'  | Valor del elemento de la lista.  |
-| params         | {}          | {}       | Datos para enviar en a petición HTTP según método get de axios |
+| params         | Params      | {}       | Objeto o funcion que retorna un objeto para enviar en la petición HTTP según método get de axios. |
 | url            | string      |          | URL servicio HTTP  |
-| searchParam    | string      | 'q'      | Parametro de busqueda que se utiliza en el servicio HTTP |
+| searchParam    | string      | ''      | Parametro de busqueda que se utiliza en el servicio HTTP |
 | toDataSource   | function    | (data, returnObjet) => DataSource[] | Funciona para trasformar los datos del servicio HTTP en un DataSource válido |
-
-
 
 ## Ejemplos
 

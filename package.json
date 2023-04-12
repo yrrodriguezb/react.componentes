@@ -1,8 +1,14 @@
 {
-  "name": "comunes",
-  "version": "0.1.0",
+  "name": "@yrrodriguezb/react-components",
+  "version": "0.1.23",
   "private": false,
   "homepage": ".",
+  "description": "Libreria de componentes en React",
+  "main": "./dist/index.js",
+  "types": "./dist/src/index.d.ts",
+  "files": [
+    "./dist"
+  ],
   "dependencies": {
     "@emotion/react": "^11.10.4",
     "@emotion/styled": "^11.10.4",
@@ -30,12 +36,17 @@
     "start": "react-scripts start",
     "build": "npm run clean && react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lib:dev": "rimraf ./dist/* && webpack --mode development",
+    "lib:prod": "rimraf ./dist/* && webpack --mode=production"
   },
   "eslintConfig": {
     "extends": [
       "react-app",
       "react-app/jest"
+    ],
+    "ignorePatterns": [
+      "dist/*"
     ]
   },
   "browserslist": {
@@ -51,6 +62,31 @@
     ]
   },
   "devDependencies": {
-    "@types/react-test-renderer": "^18.0.0"
+    "@types/react-test-renderer": "^18.0.0",
+    "@types/webpack": "^5.28.0",
+    "css-loader": "^6.7.3",
+    "css-minimizer-webpack-plugin": "^5.0.0",
+    "terser-webpack-plugin": "^5.3.7",
+    "ts-loader": "^9.4.2",
+    "ts-node": "^10.9.1",
+    "webpack": "^5.76.3",
+    "webpack-cli": "^5.0.1"
+  },
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yrrodriguezb/react.componentes.git"
+  },
+  "keywords": [
+    "React",
+    "components",
+    "autocomplete"
+  ],
+  "author": "Yeison Rodriguez",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yrrodriguezb/react.componentes/issues"
   }
 }

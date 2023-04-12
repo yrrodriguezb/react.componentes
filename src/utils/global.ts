@@ -1,5 +1,16 @@
 import packageJson from '../../package.json';
 
+export interface AYF {
+  APP_NAME: string;
+  APP_VERSION: string;
+  BASE_URL: string,
+  BUILD_MODE_PRODUCTION: boolean;
+  SITE_URL: string;
+  TOKEN: string;
+  VERSION_ERP: string;
+}
+
+
 const tryGetVersionErp = () => {
   const regex = /v(\d)?/gi;
   const  pathname = window.parent.location.pathname || window.location.pathname;
@@ -61,15 +72,20 @@ const resolveVersionErp = () => {
   return tryGetVersionErp();
 }
 
-const AYF: AYF = {
+const siteUrl = resolveURL();
+const versionErp = resolveVersionErp();
+const baseUrl = Boolean(siteUrl.length) && Boolean(versionErp.length) ? `${siteUrl}/${versionErp}` : '';
+
+const __AYF: AYF = {
   APP_NAME: packageJson.name || 'configuracion',
   APP_VERSION: packageJson.version,
+  BASE_URL: baseUrl,
   BUILD_MODE_PRODUCTION: process.env.NODE_ENV === 'production',
-  SITE_URL: resolveURL(),
+  SITE_URL: siteUrl,
   TOKEN: resolveToken(),
-  VERSION_ERP: resolveVersionErp()
+  VERSION_ERP: versionErp
 }
 
-window.__AYF__ = window.__AYF__ || AYF;
+window.__AYF__ = window.__AYF__ || __AYF;
 
 export default window.__AYF__;
