@@ -22,6 +22,7 @@ export const AYF_GLOBAL = AYF_VARIABLES;
 
 export {
   defaultFunction,
+  isBoolean,
   isEmptyObject,
   isFunction,
   isNotEmptyObject,

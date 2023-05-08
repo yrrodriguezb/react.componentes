@@ -26,6 +26,7 @@ export {
   AYF_GLOBAL,
   defaultFunction,
   getRandomInt,
+  isBoolean,
   isEmptyObject,
   isFunction,
   isNotEmptyObject,

@@ -71,10 +71,6 @@ function App() {
     returnObject: true,
     iconElement: () => <ArrowDropDown />,
     inputProps: {
-      color: 'secondary',
-      size: 'medium',
-      label: 'Show',
-      focused: true,
       placeholder: 'Buscar programa ...'
     },
     service: {
@@ -82,14 +78,11 @@ function App() {
       dataText:'name',
       dataValue:'id',
       searchParam: 'q',
-      toDataSource: (data: any[], returnObject) => {
+      toDataSource: (data: any[]) => {
         return data.map((d: any) => {
           const { show } = d;
           let user:any = { text: show.name, value: show.id }
-
-          if (returnObject)
-            user.original = d;
-
+          user.original = d;
           return user;
         })
       }
@@ -98,7 +91,10 @@ function App() {
   }
 
   let autocopmpletarProps2: AutocompletarProps = {
-    clearable: true,
+    multiple: {
+      addListItemAll: true,
+      returnAsString: true
+    },
     service: {
       url:'https://jsonplaceholder.typicode.com/users', // ?q=girls, excecuteOnce
       dataText:'email',
@@ -106,15 +102,15 @@ function App() {
       executeOnce: true
     },
     returnObject: true,
-    onSelected: (d: DataSource<User>) => {
-      console.log(d.original)
+    onSelected: (d: any) => {
+      console.log(d)
     },
-    panelWidth: '400px'
   }
 
   let autocopmpletarProps3: AutocompletarProps = {
     clearable: true,
     data: countryList,
+    multiple: true,
     renderText: function (o: DataSource | any) {
         return  `[Value]: ${o.value} - [Text]: ${o.text} - [Full]: ${o.value} - ${o.text}`;
     },
@@ -138,7 +134,6 @@ function App() {
     }
     return value
    }
-
 
   return (
     <>

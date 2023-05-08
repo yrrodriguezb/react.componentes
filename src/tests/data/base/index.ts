@@ -1,2 +1,2 @@
-export { dataSource } from "./DataSource";
+export { dataSource, numbers } from "./DataSource";
 

@@ -1,6 +1,6 @@
 {
   "name": "@yrrodriguezb/react-components",
-  "version": "0.1.23",
+  "version": "0.1.29",
   "private": false,
   "homepage": ".",
   "description": "Libreria de componentes en React",
@@ -9,27 +9,41 @@
   "files": [
     "./dist"
   ],
-  "dependencies": {
-    "@emotion/react": "^11.10.4",
-    "@emotion/styled": "^11.10.4",
-    "@fontsource/roboto": "^4.5.8",
-    "@mui/icons-material": "^5.10.9",
-    "@mui/material": "^5.10.10",
+  "devDependencies": {
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "@types/jest": "^27.5.2",
+    "@types/mui-image": "^1.0.1",
     "@types/node": "^16.11.68",
     "@types/react": "^18.0.21",
     "@types/react-dom": "^18.0.6",
-    "axios": "^1.2.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1",
+    "@types/react-test-renderer": "^18.0.0",
+    "@types/webpack": "^5.28.0",
+    "css-loader": "^6.7.3",
+    "css-minimizer-webpack-plugin": "^5.0.0",
     "react-test-renderer": "^18.2.0",
+    "terser-webpack-plugin": "^5.3.7",
+    "ts-loader": "^9.4.2",
+    "ts-node": "^10.9.1",
+    "webpack": "^5.76.3",
+    "webpack-cli": "^5.0.1"
+  },
+  "dependencies": {
+    "axios": "^1.2.1",
+    "react-scripts": "5.0.1",
     "ts-jest": "^29.0.3",
     "typescript": "^4.8.4",
     "web-vitals": "^2.1.4"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@emotion/react": "^11.10.4",
+    "@emotion/styled": "^11.10.4",
+    "@fontsource/roboto": "^4.5.8",
+    "@mui/icons-material": "^5.10.9",
+    "@mui/material": "^5.10.10"
   },
   "scripts": {
     "clean": "rimraf ./buld/*",
@@ -38,7 +52,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "lib:dev": "rimraf ./dist/* && webpack --mode development",
-    "lib:prod": "rimraf ./dist/* && webpack --mode=production"
+    "lib:prod": "rimraf ./dist/* && webpack --mode=production",
+    "package": "npm version patch -f && npm run lib:prod && npm publish"
   },
   "eslintConfig": {
     "extends": [
@@ -60,17 +75,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "@types/react-test-renderer": "^18.0.0",
-    "@types/webpack": "^5.28.0",
-    "css-loader": "^6.7.3",
-    "css-minimizer-webpack-plugin": "^5.0.0",
-    "terser-webpack-plugin": "^5.3.7",
-    "ts-loader": "^9.4.2",
-    "ts-node": "^10.9.1",
-    "webpack": "^5.76.3",
-    "webpack-cli": "^5.0.1"
   },
   "directories": {
     "doc": "docs"

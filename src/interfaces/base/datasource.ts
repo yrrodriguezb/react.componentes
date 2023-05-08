@@ -1,7 +1,7 @@
 export interface DataSource<T = any> {
   id?: number | string;
-  value: string,
-  text: string
+  value: string;
+  text: string;
   original?: T;
 }
 

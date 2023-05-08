@@ -29,6 +29,10 @@ export function isNotFunction(obj: any) {
   return !isFunction(obj);
 };
 
+export function isBoolean(obj: any) {
+  return typeof obj === "boolean";
+};
+
 export function defaultFunction(...args: any) { };
 
 export function normalizeString(str: string | number) {
@@ -41,6 +45,7 @@ export function normalizeString(str: string | number) {
 
 const utilsFunctions = {
   defaultFunction,
+  isBoolean,
   isEmptyObject,
   isFunction,
   isNotFunction,
