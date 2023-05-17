@@ -33,6 +33,10 @@ export {
 } from './fn';
 
 export {
+  range
+} from './array'
+
+export {
   AYF
 } from './global';
 

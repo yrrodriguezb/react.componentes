@@ -19,6 +19,7 @@ Componente que permite filtrar datos de tipo **DataSource** para mostralos en un
 | renderText     | (obj: DataSource) => string | (obj) => obj.text | Función que renderiza el texto del elemento ListItem y el texto al seleccionar, por defecto el valor en service.dataValueText |
 | returnObject   | boolean                     | false             | Retorna el objeto original cuando los datos provienen de un servicio HTTP en una propiedad llamada ***'original'***. |
 | service        | ServiceProps                | {}                | Propiedades del servicio HTTP. |
+| value          | string                      | ''                | Valor por defecto en el input text. |
 
 
 ## Service Props

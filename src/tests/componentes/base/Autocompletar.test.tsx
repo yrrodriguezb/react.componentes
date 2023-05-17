@@ -95,8 +95,41 @@ describe("Pruebas en <Autocompletar />", () => {
     expect(apiMockGet).toHaveBeenCalledTimes(3);
   });
 
-  test('Debe permitir seleccionar de forma multiple y emitir los datos seleccionados separados por coma (,)', async () => {
+  test('Debe permitir seleccionar de forma multiple', async () => {
     apiMockGet.mockReturnValue(response);
+
+    const Component = () => (
+      <Autocompletar
+        data-testid={ testId }
+        data={ numbers  }
+        multiple={{
+          addListItemAll: true
+        }}
+      />
+    );
+
+    const { rerender } = render(<Component />);
+    const element: HTMLElement | null = screen.getByRole(ReactMuiRole.TextBox);
+    fireEvent.focusIn(element);
+
+    const skeleton: HTMLElement | null = screen.queryByRole(ReactMuiRole.Container);
+    expect(skeleton).toBeInTheDocument();
+
+    rerender(<Component />);
+
+    await waitFor(() => {
+      expect(skeleton).not.toBeInTheDocument();
+    })
+
+    await waitFor(() => {
+      const checkboxlist: HTMLElement[] | null = screen.queryAllByRole(ReactMuiRole.CheckBox);
+      // Mas uno por el item de todos segun propiedad addListItemAll
+      const countChecbox = numbers.length + 1;
+      expect(checkboxlist.length).toBe(countChecbox);
+    })
+  });
+
+  test('Debe emitir los datos separados por coma (,) cuando el control es de seleccion multiple', async () => {
     const selected = jest.fn();
 
     const Component = () => (
@@ -113,24 +146,23 @@ describe("Pruebas en <Autocompletar />", () => {
 
     const { rerender } = render(<Component />);
     const element: HTMLElement | null = screen.getByRole(ReactMuiRole.TextBox);
-    fireEvent.focusIn(element)
+    fireEvent.focusIn(element);
+    rerender(<Component />);
 
-    const checkboxlist: HTMLElement[] | null = screen.queryAllByRole(ReactMuiRole.CheckBox);
-    const listitems: HTMLElement[] | null = screen.queryAllByRole(ReactMuiRole.ListItem);
-    // Mas uno por el item de todos segun propiedad addListItemAll
-    const countChecbox = countryListTop10.length + 1;
-    const emittedData = "-1," + numbers.map(d => d.value).join(',');
+    let checkboxList: HTMLElement[] | null = [];
+    const emittedData = numbers.map(d => d.value).join(',');
 
-    expect(checkboxlist).toBeTruthy();
-    expect(checkboxlist.length).toBe(countChecbox);
+    await waitFor(() => {
+      checkboxList = screen.queryAllByRole(ReactMuiRole.CheckBox);
+      expect(checkboxList[0]).toBeInTheDocument()
+    })
 
-
-    fireEvent.mouseDown(listitems[0]);
+    fireEvent.mouseDown(checkboxList[0]);
     rerender(<Component/>);
     fireEvent.blur(element)
 
     expect(selected).toHaveBeenCalledTimes(1);
     expect(selected).toHaveBeenCalledWith(emittedData);
-  });
+  })
 
 })

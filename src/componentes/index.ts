@@ -1,1 +1,6 @@
-export * from './Base'
+export {
+  Autocompletar,
+  AutocompletarProps,
+  MultipleProps,
+  TextProps
+} from './Base/Autocompletar'

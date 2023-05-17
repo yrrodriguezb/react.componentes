@@ -1,6 +1,6 @@
 {
   "name": "@yrrodriguezb/react-components",
-  "version": "0.1.29",
+  "version": "0.1.32",
   "private": false,
   "homepage": ".",
   "description": "Libreria de componentes en React",
@@ -53,6 +53,7 @@
     "eject": "react-scripts eject",
     "lib:dev": "rimraf ./dist/* && webpack --mode development",
     "lib:prod": "rimraf ./dist/* && webpack --mode=production",
+    "lib:publish": "rimraf ./dist/* && webpack --mode=production && npm publish --access=public",
     "package": "npm version patch -f && npm run lib:prod && npm publish"
   },
   "eslintConfig": {

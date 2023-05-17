@@ -2,6 +2,7 @@ import React from 'react'
 import { Clear, Search } from '@mui/icons-material';
 import { Fade, Stack } from '@mui/material';
 import Button from '@mui/material/Button';
+import Box from '@mui/material/Box'
 import Checkbox from '@mui/material/Checkbox';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -10,37 +11,51 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
+import Skeleton from '@mui/material/Skeleton';
 import TextField, { TextFieldProps } from '@mui/material/TextField'
 import Typography from '@mui/material/Typography';
 import api from '../../utils/api';
-import useDebounce from '../../hooks/useDebounce';
-import useEvent from '../../hooks/useEvent';
+import { useDebounce, useEvent } from '../../hooks';
 import { DataSource, ServiceProps } from '../../interfaces/base';
 import { defaultFunction, isBoolean, isEmptyObject, isFunction, isNotEmptyObject, normalizeString } from '../../utils/fn';
 import { others as keyCodes } from '../../utils/keyboard';
+import { range } from '../../utils/array';
 
 
 interface stateProps {
   dataSource: DataSource[],
   open: boolean;
-  value: string;
 }
 
 interface ListBoxItemProps {
+  checkeable?: boolean;
+  selected?: boolean;
   index: number;
+  onChange?: (data: DataSource) => void;
   option: DataSource;
+  renderText?: (option: DataSource) => string;
 }
 
-interface MultipleProps {
+export interface MultipleProps {
   addListItemAll?: boolean;
   returnAsString?: Boolean;
   textSelected?: (count: number) => string;
   textItemAll?: string;
 }
 
-type OmitTextFieldProps = 'InputProps' | 'onChange' | 'onFocus' | 'onKeyDown' | 'onBlur' | 'type';
+type OmitTextFieldProps =  'InputProps' | 'type' | 'onChange';
 
-interface InputTextProps extends Omit<TextFieldProps, OmitTextFieldProps> { }
+interface InputTextProps extends Omit<TextFieldProps, OmitTextFieldProps> {}
+
+export interface TextProps {
+  clearable?: boolean;
+  defaultValue?: string;
+  delay?: number;
+  hideIcon?: boolean;
+  icon?: () => JSX.Element;
+  onChange: (value: string) => void;
+  inputProps?: InputTextProps;
+}
 
 export interface AutocompletarProps {
   clearable?: boolean;
@@ -53,9 +68,10 @@ export interface AutocompletarProps {
   multiple?: boolean | MultipleProps;
   onSelected?: (element: any) => void;
   panelWidth?: number | string;
-  renderText?: (o: DataSource | any) => string;
+  renderText?: (obj: DataSource | any) => string;
   returnObject?: boolean;
   service?: ServiceProps;
+  value?: string;
 }
 
 const renderTextDefault = (obj: DataSource) => obj?.text;
@@ -76,6 +92,132 @@ const toMap = (data: any[]) => {
   return data || [];
 }
 
+const InputText = React.forwardRef<HTMLDivElement, TextProps>((inProps, ref) => {
+  const {
+    clearable = false,
+    defaultValue = '',
+    delay = 500,
+    hideIcon = false,
+    icon: MainIcon,
+    inputProps = {},
+    onChange,
+    ...props
+  } = inProps;
+
+  const [ value, setValue ] = React.useState('');
+
+  React.useEffect(() => {
+    setValue(defaultValue);
+  }, [ defaultValue ])
+
+  const debounce = useDebounce(onChange, delay);
+
+  const clear = () => {
+    setValue('');
+  }
+
+  const ClearIcon = () => {
+    const visible = Boolean(value.trim().length) && clearable;
+
+    return (
+      <IconButton
+        sx={{ visibility: visible ? 'visible' : 'hidden' }}
+        onClick={ clear }
+        component='label'
+        size='small'
+        tabIndex={ -1 }
+      >
+        <Clear color='disabled' />
+      </IconButton>
+    );
+  }
+
+  const IconsEndAdornment = () => {
+    return (
+      <InputAdornment position='end'>
+        { <ClearIcon /> }
+        { !hideIcon && MainIcon && <MainIcon /> }
+      </InputAdornment>
+    )
+  }
+
+  const handleInputChange = (event: any) => {
+    const inputValue = event.target.value;
+    setValue(inputValue);
+    debounce(inputValue);
+  }
+
+  return (
+    <TextField
+      size="small"
+      { ...props }
+      { ...inputProps }
+      autoComplete='off'
+      InputProps={{
+        endAdornment:   <IconsEndAdornment />,
+      }}
+      onChange={ handleInputChange }
+      ref={ ref }
+      type="text"
+      value={ value }
+    />
+  )
+})
+
+const ListBoxItem = React.forwardRef<HTMLInputElement, ListBoxItemProps>((inProps, ref) => {
+  const {
+    checkeable = false,
+    selected = false,
+    index,
+    option,
+    onChange,
+    renderText = renderTextDefault,
+  } = inProps;
+
+  const attrs = {
+    'data-option-index': index
+  }
+
+  const defaultSelected = false || selected;
+  const [ checked, setChecked ] = React.useState(false);
+
+  React.useEffect(() => {
+    setChecked(defaultSelected);
+  }, [ defaultSelected ])
+
+  const handleMouseDown = () => {
+    if (onChange) {
+      onChange(option);
+    }
+    const isCheched = !checked;
+    setChecked(isCheched);
+  }
+
+  return (
+    <ListItem
+      disablePadding
+      dense
+      onMouseDown={() => { handleMouseDown() }}
+      { ...attrs }
+    >
+      <ListItemButton selected={ checkeable && checked } tabIndex={ 1 } dense>
+        { checkeable &&  (
+          <ListItemIcon sx={{ minWidth: 'auto' }}>
+            <Checkbox
+              edge="start"
+              checked={ checked }
+              tabIndex={ -1 }
+              disableRipple
+              inputRef={ ref }
+            />
+          </ListItemIcon>
+        )}
+        <ListItemText primary={ renderText(option) } />
+      </ListItemButton>
+    </ListItem>
+  )
+})
+
 export const Autocompletar = (inProps: AutocompletarProps) => {
   const {
     clearable = false,
@@ -91,6 +233,7 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     returnObject = false,
     panelWidth,
     service,
+    value = '',
     ...props
   } = inProps;
 
@@ -118,15 +261,12 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   const cursorRef = React.useRef<number>(-1);
   const cursorPrevRef = React.useRef<number>(-1);
   const changeSelected = React.useRef<Boolean>(false);
+  const values = React.useRef<any[]>([]);
 
-  const [ state, setState ] = React.useState<stateProps>({
-    dataSource: data || [],
-    open: false,
-    value: ''
-  });
-
+  const [ state, setState ] = React.useState<stateProps>({dataSource: data || [], open: false });
+  const [ inputValue, setInputValue ] = React.useState<string>('' || value);
   const [ initialData, setinitialData ] = React.useState<DataSource[]>([]);
-  const [ selected, setSelected ] = React.useState<readonly any[]>([]);
+  const [ loading, setLoading ] = React.useState<boolean>(true);
   const isMultiple = isBoolean(multiple) || isNotEmptyObject(multiple);
   const classNamePrefix = 'Mui';
 
@@ -148,6 +288,13 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
       setState(s => ({ ...s, dataSource }));
       setinitialData(dataSource);
     }
+  });
+
+
+  React.useEffect(() => {
+    setTimeout(() => {
+      setLoading(false);
+    }, 1000);
   });
 
   React.useEffect(() => {
@@ -227,17 +374,19 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   }
 
   const getData = async (pattern: string) => {
+    setLoading(true);
+
     if (pattern.trim().length) {
       if (urlService) {
         const params = resolveParams(pattern);
         const { data:datos } = await api.get(urlService, { params });
 
         let dataSource: DataSource[] =  toDataSource ? toDataSource(datos, returnObject) : mapDataSource(datos);
-        setState({ value: pattern, dataSource, open: Boolean(dataSource.length) });
+        setState({ dataSource, open: Boolean(dataSource.length) });
       }
     }
     else {
-      setState({ value: pattern, dataSource: [], open: false });
+      setState({ dataSource: [], open: false });
     }
   }
 
@@ -267,18 +416,16 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
           return filter(pattern, el) || found;
         });
 
-        setState({ value: pattern, dataSource: filterData, open: Boolean(filterData.length) });
+        setState({ dataSource: filterData, open: Boolean(filterData.length) });
       }
     }
 
     return getData;
   })
 
-  const debounce = useDebounce(callback(), delay);
-
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    debounce(event.target.value);
-    setState({ ...state, value: event.target.value })
+  const handleInputChange = (value: string) => {
+    setLoading(true);
+    callback()(value)
   }
 
   const handleSelected = (obj: DataSource) => {
@@ -289,7 +436,8 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
       }
 
       onSelected(obj);
-      setState({ ...state, value: renderText(obj), open: false });
+      setInputValue(renderText(obj));
+      setState({ ...state, open: false }); // value: renderText(obj),
     }
   }
 
@@ -297,7 +445,8 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     return listboxRef.current !== null && listboxRef.current.parentElement?.contains(document.activeElement);
   }
 
-  const handleInputBlur = (e: any) => {
+  const handleInputBlur = (event: any) => {
+    cursorRef.current = cursorPrevRef.current = -1;
     if (isActiveElementInListbox(listRef)){
       inputRef.current?.focus();
       return;
@@ -305,8 +454,9 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
 
     if (isMultiple && changeSelected.current) {
       changeSelected.current = false;
-      onSelected(returnAsString ?  selected.join(',') : selected);
-      setState({ ...state, value: renderTextSelected(), dataSource: resolveData(), open: false });
+      onSelected(returnAsString ?  values.current.join(',') : values.current);
+      setInputValue(renderTextSelected());
+      setState({ dataSource: resolveData(), open: false }); // value: renderTextSelected(),
       return;
     }
 
@@ -326,9 +476,12 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     return !keys.includes(keyCode)
   }
 
-  const HandleSelectedAllKeyDown = (cursor: number) => {
-    if (addListItemAll && cursor === 0) {
-      handleSelectAll();
+  const triggerMouseDown = (indexElemnet: number) => {
+    const item = listRef.current?.querySelector(`[data-option-index='${indexElemnet}']`)
+
+    if (item) {
+      const mouseoverEvent = new Event('mousedown', { bubbles: true });
+      item.dispatchEvent(mouseoverEvent);
     }
   }
 
@@ -344,10 +497,7 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     if (keyCodes.ESC === e.keyCode) {
       setState({ ...state, open: false })
     } else if (e.keyCode === keyCodes.ENTER) {
-      const obj = state.dataSource.find((o, i) => i === cursor)  as DataSource;
-      HandleSelectedAllKeyDown(cursor);
-      if (obj.value !== '-1')
-        handleSelected(obj);
+      triggerMouseDown(cursor);
     } else if (keyCodes.UP === e.keyCode && cursor > 0) {
       cursor = cursor - 1 ;
     } else if (keyCodes.DOWN === e.keyCode && cursor < (state.dataSource.length - 1)) {
@@ -389,13 +539,19 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   }
 
   const handleInputFocus = (e: any) => {
+    if (state.open) {
+      return;
+    }
+
+    setLoading(true);
+
     if (isHandleInitialData()) {
       setState({ ...state, open: Boolean(state.dataSource.length) })
     }
   }
 
   const renderTextSelected = () => {
-    let arr = selected.filter(e => e !== '-1');
+    let arr = values.current.filter(e => e !== '-1');
     const countSelected = arr.length;
 
     if (textSelected)
@@ -407,16 +563,12 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     return '';
   }
 
-  const clear = () => {
-    if (isMultiple) {
-      if (selected.length) {
-        changeSelected.current = true;
-        setSelected([]);
-      }
-    }
-
-    if (state.value || state.open || executeOnce) {
-      setState({ value: '', dataSource: resolveData(), open: isMultiple })
+  const handleFilterClear = () => {
+    if (values.current.length) {
+      values.current = [];
+      setLoading(true);
+      setState({ dataSource: resolveData(), open: true });
+      setInputValue('');
     }
   }
 
@@ -436,31 +588,6 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     return {
       display: inputProps?.fullWidth ? 'block' : 'inline-block',
     }
-  }
-
-  const ClearIcon = () => {
-    const visible = (state.value && clearable) || (clearable && selected.length);
-
-    return (
-      <IconButton
-        sx={{ visibility: visible ? 'visible' : 'hidden' }}
-        onClick={ clear }
-        component='label'
-        size='small'
-        tabIndex={ -1 }
-      >
-        <Clear color='disabled' />
-      </IconButton>
-    );
-  }
-
-  const IconsEndAdornment = () => {
-    return (
-      <InputAdornment position='end'>
-        { <ClearIcon /> }
-        { !hideIcon && <MainIcon /> }
-      </InputAdornment>
-    )
   }
 
   const handleMouseDown = (e: any) => {
@@ -485,21 +612,37 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   }
 
   const handleSelectAll = () => {
+    setLoading(true)
     changeSelected.current = true;
+
     if (checkboxAllRef.current) {
       checkboxAllRef.current.checked = !checkboxAllRef.current.checked;
       if (checkboxAllRef.current.checked) {
-        const newSelected = initialData.map((d) => d.value);
-        setSelected(newSelected);
+        let newSelected = initialData.map((d) => d.value);
+        const index = newSelected.indexOf('-1');
+
+        if (index > -1) {
+          newSelected.splice(index, 1);
+        }
+
+        values.current = newSelected
         return;
       }
     }
-    setSelected([]);
+    values.current = [];
   };
 
   const handleSelectItem = (value: any) => {
+    if (value === '-1') {
+      handleSelectAll();
+      return;
+    }
+
+    const selected = values.current || [];
     const selectedIndex = selected.indexOf(value);
     let newSelected: any[] = [];
+
+    cursorRef.current = selectedIndex;
 
     if (selectedIndex === -1) {
       newSelected = newSelected.concat(selected, value);
@@ -515,89 +658,54 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     }
 
     changeSelected.current = true;
-    setSelected(newSelected);
+    values.current = newSelected;
   }
 
-  const isSelected = (obj: DataSource) => {
-    return selected.indexOf(obj.value) !== -1;
-  };
-
-  const ListBoxCheckbox = (option: DataSource) => {
-    const getItemAllProps = () => {
-      let CheckboxAllProps = {};
-
-      if (addListItemAll && option.value === '-1') {
-        let numSelected = selected.length;
-        let rowCount = initialData.length;
-
-        numSelected = selected.indexOf('-1') > -1 ? numSelected - 1 : numSelected;
-        rowCount = initialData.findIndex(d => d.value === '-1') > -1 ? rowCount - 1 : rowCount;
-
-        CheckboxAllProps = {
-          indeterminate: numSelected > 0 && numSelected < rowCount,
-          checked: rowCount > 0 && numSelected === rowCount,
-          inputRef: checkboxAllRef,
-        }
+    const isSelected = (obj: DataSource) => {
+      if (obj.value === '-1') {
+         return values.current.length === state.dataSource.length - 1;
       }
 
-      return CheckboxAllProps;
-    }
-
-    return (
-      <ListItemIcon sx={{ minWidth: 'auto' }}>
-        <Checkbox
-          edge="start"
-          checked={ isSelected(option) }
-          tabIndex={ -1 }
-          disableRipple
-          { ...getItemAllProps() }
-        />
-      </ListItemIcon>
-    )
-  }
-
-  const ListBoxItem = (inProps: ListBoxItemProps) => {
-    const {
-      index,
-      option
-    } = inProps;
-
-    const handleListBoxItemMouseDown = (option: DataSource) => {
-      if (addListItemAll && option.value === '-1') {
-        handleSelectAll();
-        return;
-      }
-
-      handleSelected(option);
-    }
-
-    const attrs = {
-      'data-option-index': index
-    }
-
-    return (
-      <ListItem
-        disablePadding={ isMultiple }
-        dense
-        onMouseDown={ () => { handleListBoxItemMouseDown(option) } }
-        { ...attrs }
-      >
-        <ListItemButton selected={ isSelected(option) } tabIndex={ 1 } dense>
-          { isMultiple && <ListBoxCheckbox { ...option } /> }
-          <ListItemText primary={ renderText(option) } />
-        </ListItemButton>
-      </ListItem>
-    )
-  }
+      return values.current.indexOf(obj.value) > -1;
+    };
 
   const ListBoxActions = () => {
     return (
       <Stack justifyContent='end' direction='row' gap={ 1 } bgcolor='#F1F0EE'>
-        <Button size='small' color='primary' onClick={ clear } tabIndex={ -1 }>
+        <Button size='small' color='primary' onClick={ handleFilterClear } tabIndex={ -1 }>
           <Typography gap={ 1.5 }>Limpiar filtros</Typography>
         </Button>
       </Stack>
     )
+  }
+
+  const AutocompletarSkeleton = () => {
+    const iterations = state.dataSource.length < 10 ? state.dataSource.length : 10;
+    let mtb = isMultiple ? 2 : 1;
+
+    return (
+      <Box sx={{ ...getSxPropsList() }} role="container">
+        {
+          range(iterations).map((number: number) => (
+            <Stack key={ number } direction="row">
+              { isMultiple && <Skeleton animation="wave" variant="rectangular" width={ 20 } height={ 20 } sx={{ mt: 2, ml: 2, mb: 2 }}/> }
+              <Skeleton animation="wave" variant="rectangular" height={ 20 } width="100%" sx={ { mt: mtb, ml: 2, mb: mtb, mr: 2 } }/>
+            </Stack>
+          ))
+        }
+      </Box>
+    )
+  }
+
+  const resolveInputValue = () => {
+    if (isMultiple) {
+      if (values.current.length === 0){
+        return '';
+      }
+      return inputValue || renderTextSelected();
+    }
+
+    return inputValue;
   }
 
   return (
@@ -607,39 +715,50 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
       onMouseDown={ handleMouseDown }
       onClick={ handleClick }
     >
-      <TextField
-        size="small"
+      <InputText
         { ...props }
-        { ...inputProps }
-        autoComplete='off'
-        inputRef={ inputRef }
-        InputProps={{
-          endAdornment: <IconsEndAdornment />,
+        inputProps={{
+          ...inputProps,
+          inputRef: inputRef,
+          onFocus: handleInputFocus,
+          onKeyDown: handleInputKeyDown,
+          onBlur: handleInputBlur
         }}
+        clearable={ clearable }
+        delay={ delay }
+        hideIcon={ hideIcon }
+        icon={ MainIcon }
         onChange={ handleInputChange }
-        onFocus={ handleInputFocus }
-        onKeyDown={ handleInputKeyDown }
-        onBlur={ handleInputBlur }
         ref={ rootInputRef }
-        type="text"
-        value={ state.value }
+        defaultValue={ resolveInputValue() }
       />
       {
         state.open && (
           <Fade in unmountOnExit>
             <Stack sx={{ boxShadow: 10, background: '#FFF', position: 'absolute' }}>
-              <List dense disablePadding ref={ listRef } sx={{ ...getSxPropsList() }}>
-                {
-                  state.dataSource.map((option, index) => (
-                    <ListBoxItem
-                      key={ option.value }
-                      index={ index }
-                      option={ option }
-                    />
-                  ))
-                }
-              </List>
-              { isMultiple && !clearable && <ListBoxActions /> }
+              { loading ?
+                <AutocompletarSkeleton /> :
+                <>
+                  <List dense disablePadding ref={ listRef } sx={{ ...getSxPropsList() }}>
+                  {
+                    state.dataSource.map((option, index) => {
+                      //console.log('1')
+                      return (
+                      <ListBoxItem
+                        key={ option.value }
+                        index={ index }
+                        option={ option }
+                        checkeable={ isMultiple }
+                        onChange={ handleSelected }
+                        selected={ isSelected(option) }
+                        ref={ option.value === '-1' ? checkboxAllRef : null }
+                      />
+                    )})
+                  }
+                  </List>
+                  { isMultiple && <ListBoxActions /> }
+                </>
+            }
             </Stack>
           </Fade>
         )
