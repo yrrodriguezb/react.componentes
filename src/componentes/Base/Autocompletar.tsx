@@ -54,6 +54,7 @@ export interface TextProps {
   hideIcon?: boolean;
   icon?: () => JSX.Element;
   onChange: (value: string) => void;
+  onClear?: () => void;
   inputProps?: InputTextProps;
 }
 
@@ -101,6 +102,7 @@ const InputText = React.forwardRef<HTMLDivElement, TextProps>((inProps, ref) => 
     icon: MainIcon,
     inputProps = {},
     onChange,
+    onClear,
     ...props
   } = inProps;
 
@@ -114,6 +116,10 @@ const InputText = React.forwardRef<HTMLDivElement, TextProps>((inProps, ref) => 
 
   const clear = () => {
     setValue('');
+
+    if (onClear) {
+      onClear();
+    }
   }
 
   const ClearIcon = () => {
@@ -122,7 +128,7 @@ const InputText = React.forwardRef<HTMLDivElement, TextProps>((inProps, ref) => 
     return (
       <IconButton
         sx={{ visibility: visible ? 'visible' : 'hidden' }}
-        onClick={ clear }
+        onMouseDown={ clear }
         component='label'
         size='small'
         tabIndex={ -1 }
@@ -185,34 +191,47 @@ const ListBoxItem = React.forwardRef<HTMLInputElement, ListBoxItemProps>((inProp
     setChecked(defaultSelected);
   }, [ defaultSelected ])
 
-  const handleMouseDown = () => {
+  const handleMouseDown = (event: any) => {
+    event.preventDefault();
+
     if (onChange) {
       onChange(option);
     }
+
     const isCheched = !checked;
     setChecked(isCheched);
+  }
+
+  const renderTextOption = (obj: DataSource) => {
+    if (renderText && obj.value !== '-1') {
+      return renderText(obj);
+    }
+
+    // Solo se renderiza el texto de la opcion (Aplica cuando es seleccion multiple para la opcion -1)
+    return renderTextDefault(obj);
   }
 
   return (
     <ListItem
       disablePadding
       dense
-      onMouseDown={() => { handleMouseDown() }}
+      onMouseDown={ handleMouseDown }
       { ...attrs }
     >
       <ListItemButton selected={ checkeable && checked } tabIndex={ 1 } dense>
         { checkeable &&  (
           <ListItemIcon sx={{ minWidth: 'auto' }}>
             <Checkbox
-              edge="start"
               checked={ checked }
-              tabIndex={ -1 }
+              edge="start"
               disableRipple
               inputRef={ ref }
+              tabIndex={ -1 }
+              size='small'
             />
           </ListItemIcon>
         )}
-        <ListItemText primary={ renderText(option) } />
+        <ListItemText primary={ renderTextOption(option) } />
       </ListItemButton>
     </ListItem>
   )
@@ -262,16 +281,18 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   const cursorPrevRef = React.useRef<number>(-1);
   const changeSelected = React.useRef<Boolean>(false);
   const values = React.useRef<any[]>([]);
+  const firstFocus = React.useRef(true);
 
   const [ state, setState ] = React.useState<stateProps>({dataSource: data || [], open: false });
   const [ inputValue, setInputValue ] = React.useState<string>('' || value);
   const [ initialData, setinitialData ] = React.useState<DataSource[]>([]);
   const [ loading, setLoading ] = React.useState<boolean>(true);
   const isMultiple = isBoolean(multiple) || isNotEmptyObject(multiple);
+  const isHandleInitialData = executeOnce || Boolean(data.length);
   const classNamePrefix = 'Mui';
 
   const onExecuteOnce = useEvent(async () => {
-    if (executeOnce || data.length) {
+    if (isHandleInitialData) {
       let dataSource: DataSource[] = [];
 
       if (executeOnce) {
@@ -289,7 +310,6 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
       setinitialData(dataSource);
     }
   });
-
 
   React.useEffect(() => {
     setTimeout(() => {
@@ -390,12 +410,8 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     }
   }
 
-  const isHandleInitialData = () => {
-    return executeOnce || Boolean(data.length);
-  }
-
   const resolveData = () => {
-    return isHandleInitialData() ? initialData : data;
+    return isHandleInitialData ? initialData : data;
   }
 
   const filter = (pattern: string, obj: DataSource) => {
@@ -425,6 +441,11 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
 
   const handleInputChange = (value: string) => {
     setLoading(true);
+
+    if (value === '') {
+      setInputValue(value); // Asigna de nuevo el valor para que el input detecte el cambio (error defaultvalue)
+    }
+
     callback()(value)
   }
 
@@ -437,7 +458,7 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
 
       onSelected(obj);
       setInputValue(renderText(obj));
-      setState({ ...state, open: false }); // value: renderText(obj),
+      setState({ ...state, open: false });
     }
   }
 
@@ -452,11 +473,13 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
       return;
     }
 
+    firstFocus.current = true;
+
     if (isMultiple && changeSelected.current) {
       changeSelected.current = false;
       onSelected(returnAsString ?  values.current.join(',') : values.current);
       setInputValue(renderTextSelected());
-      setState({ dataSource: resolveData(), open: false }); // value: renderTextSelected(),
+      setState({ dataSource: resolveData(), open: false });
       return;
     }
 
@@ -512,6 +535,12 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     changeSelectionRange();
   }
 
+  const handleInputClear = () => {
+    if (!executeOnce && !isMultiple) {
+      setState({ dataSource: [], open: false })
+    }
+  }
+
   const changeItemActive = (cursor: number) => {
     const scrollParent = listRef.current;
 
@@ -545,7 +574,7 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
 
     setLoading(true);
 
-    if (isHandleInitialData()) {
+    if (isHandleInitialData) {
       setState({ ...state, open: Boolean(state.dataSource.length) })
     }
   }
@@ -563,7 +592,9 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     return '';
   }
 
-  const handleFilterClear = () => {
+  const handleFilterClear = (event: any) => {
+    event.preventDefault();
+
     if (values.current.length) {
       values.current = [];
       setLoading(true);
@@ -585,13 +616,28 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   }
 
   const getStylesRoot = () => {
-    return {
-      display: inputProps?.fullWidth ? 'block' : 'inline-block',
+    let style: any = {
+      display: inputProps?.fullWidth ? 'block' :  'inline-block',
     }
+
+    if (inputProps?.fullWidth) {
+      style.width =  '100%'
+    }
+
+    return style;
   }
 
-  const handleMouseDown = (e: any) => {
-    e.preventDefault();
+  const getListProps = () => {
+    return {
+      dense: true,
+      disablePadding: true,
+      ref: listRef,
+      sx: { ...getSxPropsList() },
+      onMouseDown: (event: any) => {
+        // previene el evento blur
+        event.preventDefault()
+      }
+    }
   }
 
   const handleClick = (event: any) => {
@@ -602,12 +648,22 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     const input = inputRef.current;
 
     if (input) {
-      const selection = input.selectionEnd! - input.selectionStart!;
-      if (selection === 0) {
-        input.select()
-        const end = input.value.length;
-        input.setSelectionRange(end, end);
+      input.focus();
+      if (firstFocus.current && (input.selectionEnd! - input.selectionStart!) === 0) {
+        input.select();
       }
+
+      firstFocus.current = false;
+    }
+
+    if (!state.open && state.dataSource.length > 0) {
+      setState({ ...state, open: true })
+    }
+  }
+
+  const handleMouseDown = (event: any) => {
+    if (!event.currentTarget.contains(event.target)) {
+      return;
     }
   }
 
@@ -671,8 +727,8 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
 
   const ListBoxActions = () => {
     return (
-      <Stack justifyContent='end' direction='row' gap={ 1 } bgcolor='#F1F0EE'>
-        <Button size='small' color='primary' onClick={ handleFilterClear } tabIndex={ -1 }>
+      <Stack direction='row' justifyContent='end' bgcolor='#F1F0EE' gap={ 1 } padding={ 1 }>
+        <Button size='small' color='primary' onMouseDown={ handleFilterClear } tabIndex={ -1 }>
           <Typography gap={ 1.5 }>Limpiar filtros</Typography>
         </Button>
       </Stack>
@@ -681,20 +737,40 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
 
   const AutocompletarSkeleton = () => {
     const iterations = state.dataSource.length < 10 ? state.dataSource.length : 10;
-    let mtb = isMultiple ? 2 : 1;
+    const mtb = isMultiple ? 2 : 1;
+    const height = 14;
+    const width = 17;
 
     return (
-      <Box sx={{ ...getSxPropsList() }} role="container">
-        {
-          range(iterations).map((number: number) => (
-            <Stack key={ number } direction="row">
-              { isMultiple && <Skeleton animation="wave" variant="rectangular" width={ 20 } height={ 20 } sx={{ mt: 2, ml: 2, mb: 2 }}/> }
-              <Skeleton animation="wave" variant="rectangular" height={ 20 } width="100%" sx={ { mt: mtb, ml: 2, mb: mtb, mr: 2 } }/>
-            </Stack>
-          ))
-        }
-      </Box>
+      <>
+        <Box sx={{ ...getSxPropsList() }} role="container" >
+          {
+            range(iterations).map((number: number) => (
+              <Stack key={ number } direction="row">
+                { isMultiple && <Skeleton animation="wave" variant="rectangular" width={ width } height={ height } sx={{ mt: 2, ml: 2, mb: 2 }}/> }
+                <Skeleton animation="wave" variant="rectangular" height={ height } width="100%" sx={ { mt: mtb, ml: 2, mb: mtb, mr: 2 } }/>
+              </Stack>
+            ))
+          }
+        </Box>
+        { isMultiple && (
+          <Stack direction="row" justifyContent="flex-end">
+            <Skeleton animation="wave" variant="rectangular" height={ height } width="100px" sx={ { mt: mtb, ml: 2, mb: mtb, mr: 2 } }/>
+          </Stack>
+        ) }
+      </>
     )
+  }
+
+  const findValue = (str: string) => {
+    if ((+str) && executeOnce) {
+      const option = state.dataSource.find(o => normalizeString(str) === normalizeString(o.value));
+
+      if (option) {
+        return renderText(option);
+      }
+    }
+    return str;
   }
 
   const resolveInputValue = () => {
@@ -705,15 +781,15 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
       return inputValue || renderTextSelected();
     }
 
-    return inputValue;
+    return findValue(inputValue);
   }
 
   return (
     <div
       id={ id }
       style={ getStylesRoot() }
-      onMouseDown={ handleMouseDown }
       onClick={ handleClick }
+      onMouseDown={ handleMouseDown }
     >
       <InputText
         { ...props }
@@ -729,6 +805,7 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
         hideIcon={ hideIcon }
         icon={ MainIcon }
         onChange={ handleInputChange }
+        onClear={ handleInputClear }
         ref={ rootInputRef }
         defaultValue={ resolveInputValue() }
       />
@@ -739,10 +816,9 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
               { loading ?
                 <AutocompletarSkeleton /> :
                 <>
-                  <List dense disablePadding ref={ listRef } sx={{ ...getSxPropsList() }}>
+                  <List { ...getListProps() }>
                   {
                     state.dataSource.map((option, index) => {
-                      //console.log('1')
                       return (
                       <ListBoxItem
                         key={ option.value }

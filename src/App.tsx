@@ -6,7 +6,7 @@ import TablaFiltro from'./componentes/Base/TablaFiltro';
 import Autocompletar, { AutocompletarProps } from './componentes/Base/Autocompletar'
 import countryList from './tests/data/countries';
 import DataSource from './interfaces/base/datasource';
-import { Autocomplete, Checkbox, Divider, TextField, Typography } from '@mui/material';
+import { Autocomplete, Card, Checkbox, Divider, Modal, Stack, TextField, Typography } from '@mui/material';
 import { ArrowDropDown } from '@mui/icons-material';
 
 export interface User {
@@ -91,10 +91,6 @@ function App() {
   }
 
   let autocopmpletarProps2: AutocompletarProps = {
-    multiple: {
-      addListItemAll: true,
-      returnAsString: true
-    },
     service: {
       url:'https://jsonplaceholder.typicode.com/users', // ?q=girls, excecuteOnce
       dataText:'email',
@@ -105,6 +101,8 @@ function App() {
     onSelected: (d: any) => {
       console.log(d)
     },
+    value: "1",
+    //clearable: true
   }
 
   let autocopmpletarProps3: AutocompletarProps = {
@@ -187,8 +185,43 @@ function App() {
       <pre>{JSON.stringify(autocopmpletarProps3, replacer, 2)}</pre>
       <br />
 
+      {/* <Modal
+          open
+        >
+        <Card sx={{
+          height: '400px'
+        }}>
+            <Stack direction="column" padding={3}>
+              <Stack direction="column" padding={2} gap={1.5} alignItems="center">
+
+                <Stack direction="column" gap={3} alignItems="center" width={"100%"}>
+                  <Typography variant="h6" color="primary.main">
+                    Selecciona el tercero que deseas consultar
+                  </Typography>
+
+                  <Autocompletar
+                    { ...autocopmpletarProps1 }
+                  />
+
+                  <Autocomplete
+                    disablePortal
+                    id="combo-box-demo"
+                    options={countryList}
+                    sx={{ width: 300 }}
+                    renderInput={(params) => <TextField {...params} label="Country" />}
+                    onBlur={(e) => {
+                      console.log(document.activeElement);
+                      console.log(e)
+                    }}
+                  />
+                </Stack>
+              </Stack>
+            </Stack>
+          </Card>
+        </Modal> */}
+
       {/* <Autocomplete
-        multiple
+
         id="checkboxes-tags-demo"
         options={data2}
         disableCloseOnSelect
@@ -199,11 +232,7 @@ function App() {
 
           return (
             <li {...props}>
-              <Checkbox
 
-                style={{ marginRight: 8 }}
-                checked={selected}
-              />
               {option.text}
             </li>
           );

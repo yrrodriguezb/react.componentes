@@ -4,3 +4,8 @@ export {
   MultipleProps,
   TextProps
 } from './Base/Autocompletar'
+
+export {
+  AutocompletarCentroCostos,
+  AutocompletarCentroCostosProps
+} from './Autocompletar'

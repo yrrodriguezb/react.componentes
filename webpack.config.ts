@@ -24,7 +24,13 @@ const config: webpack.Configuration = {
         use: [
           MiniCssExtractPlugin.loader,
           "style-loader",
-          "css-loader"
+          {
+            loader: "css-loader",
+            options: {
+              importLoaders: 1,
+              modules: true,
+            },
+          },
         ],
         exclude: /node_modules/,
       },
@@ -39,7 +45,10 @@ const config: webpack.Configuration = {
   },
   externals: [
     'react',
-    'react-dom'
+    'react-dom',
+    'react-dom/client',
+    '@emotion/react',
+    '@emotion/styled'
   ],
   output: {
     filename: 'index.js',
