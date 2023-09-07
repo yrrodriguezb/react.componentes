@@ -1,9 +1,13 @@
-import { DataSource } from '../../interfaces';
-import Autocompletar, { MultipleProps } from '../Base/Autocompletar'
+import { DataSource } from "../../../interfaces";
+import Autocompletar, { InputTextProps, MultipleProps } from "../../Base/Autocompletar";
+
 
 export interface AutocompletarCentroCostosProps {
   baseURL: string;
+  fullWidth?: boolean;
   multiple?: boolean;
+  id?: string;
+  inputProps?: InputTextProps;
   onSelected: (data: string) => void;
   value?: string;
 }
@@ -12,7 +16,10 @@ export const AutocompletarCentroCostos = (inProps: AutocompletarCentroCostosProp
 
   const {
     baseURL,
+    fullWidth = false,
     multiple = false,
+    id,
+    inputProps,
     onSelected,
     ...props
   } = inProps;
@@ -40,31 +47,29 @@ export const AutocompletarCentroCostos = (inProps: AutocompletarCentroCostosProp
     return !multiple;
   }
 
-  const isExecuteOnce = () => {
-    return multiple;
-  }
-
   const renderText = (obj: DataSource) => {
     return `${obj.value} - ${obj.text}`;
   }
 
   return (
     <Autocompletar
+      id={ id }
       { ...props }
       clearable={ isClerable() }
       inputProps={{
         placeholder: 'Nombre o código de centro de costos',
-        fullWidth: true
+        fullWidth,
+        ...inputProps
       }}
       multiple={{ ...resolveMultiple() }}
       service={{
-        url: `${baseURL}ConsultasGenerales/Consultar_CentrosCostos/`,
-        dataText: 'nombre',
-        dataValue: 'codigo',
-        executeOnce: isExecuteOnce(),
-        toDataSource(data: any) {
-          return data.datos.map((e: any) => ({ value: e.codigo, text: e.nombre } as DataSource))
-        }
+        url: `${baseURL}posts/`,
+        dataText: 'title',
+        dataValue: 'id',
+        executeOnFirstFocus: true,
+        toDataSource(data) {
+            return data.map((e: any) => ({ text: e.title, value: e.id }))
+        },
       }}
       onSelected={ onSelected }
       renderText={ renderText }

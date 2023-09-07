@@ -3,9 +3,9 @@ export {
   AutocompletarProps,
   MultipleProps,
   TextProps
-} from './Base/Autocompletar'
+} from './Base/Autocompletar';
 
 export {
   AutocompletarCentroCostos,
   AutocompletarCentroCostosProps
-} from './Autocompletar'
+} from './Autocompletar';

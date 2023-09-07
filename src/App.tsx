@@ -8,6 +8,7 @@ import countryList from './tests/data/countries';
 import DataSource from './interfaces/base/datasource';
 import { Autocomplete, Card, Checkbox, Divider, Modal, Stack, TextField, Typography } from '@mui/material';
 import { ArrowDropDown } from '@mui/icons-material';
+import { AutocompletarCentroCostos, AutocompletarCentroCostosProps } from './componentes/Autocompletar/CentroCostos/AutocompletarCentroCostos';
 
 export interface User {
   id: number;
@@ -90,34 +91,9 @@ function App() {
     onSelected:  console.log
   }
 
-  let autocopmpletarProps2: AutocompletarProps = {
-    service: {
-      url:'https://jsonplaceholder.typicode.com/users', // ?q=girls, excecuteOnce
-      dataText:'email',
-      dataValue:'id',
-      executeOnce: true
-    },
-    returnObject: true,
-    onSelected: (d: any) => {
-      console.log(d)
-    },
-    value: "1",
-    //clearable: true
-  }
-
-  let autocopmpletarProps3: AutocompletarProps = {
-    clearable: true,
-    data: countryList,
-    multiple: {
-      addListItemAll: true,
-      textItemAll: 'all'
-    },
-    renderText: function (o: DataSource | any) {
-        return  `[Value]: ${o.value} - [Text]: ${o.text} - [Full]: ${o.value} - ${o.text}`;
-    },
-    inputProps: {
-      placeholder: 'Buscar pais ...'
-    },
+  let autocopmpletarProps2: AutocompletarCentroCostosProps = {
+    baseURL: 'https://jsonplaceholder.typicode.com/',
+    multiple: true,
     onSelected: console.log
   }
 
@@ -171,77 +147,22 @@ function App() {
       <pre>{JSON.stringify(autocopmpletarProps1, replacer, 2)}</pre>
       <br />
 
-      <Typography variant='h6'>Servicio que se ejecuta una vez</Typography>
-      <Autocompletar
+
+      <Typography variant='h6'>Autocompletar Multiple</Typography>
+      <AutocompletarCentroCostos
         { ...autocopmpletarProps2 }
       />
       <pre>{JSON.stringify(autocopmpletarProps2, replacer, 2)}</pre>
       <br />
 
-      <Typography variant='h6'>Con Datos Fijos</Typography>
+      <Typography variant='h6'>Datos Fijos</Typography>
       <Autocompletar
-        { ...autocopmpletarProps3 }
+        data={ data }
+        onSelected={ console.log }
       />
-      <pre>{JSON.stringify(autocopmpletarProps3, replacer, 2)}</pre>
+      <pre>{JSON.stringify(autocopmpletarProps2, replacer, 2)}</pre>
       <br />
 
-      {/* <Modal
-          open
-        >
-        <Card sx={{
-          height: '400px'
-        }}>
-            <Stack direction="column" padding={3}>
-              <Stack direction="column" padding={2} gap={1.5} alignItems="center">
-
-                <Stack direction="column" gap={3} alignItems="center" width={"100%"}>
-                  <Typography variant="h6" color="primary.main">
-                    Selecciona el tercero que deseas consultar
-                  </Typography>
-
-                  <Autocompletar
-                    { ...autocopmpletarProps1 }
-                  />
-
-                  <Autocomplete
-                    disablePortal
-                    id="combo-box-demo"
-                    options={countryList}
-                    sx={{ width: 300 }}
-                    renderInput={(params) => <TextField {...params} label="Country" />}
-                    onBlur={(e) => {
-                      console.log(document.activeElement);
-                      console.log(e)
-                    }}
-                  />
-                </Stack>
-              </Stack>
-            </Stack>
-          </Card>
-        </Modal> */}
-
-      {/* <Autocomplete
-
-        id="checkboxes-tags-demo"
-        options={data2}
-        disableCloseOnSelect
-        getOptionLabel={(option) => option.text}
-        renderOption={(props, option, { selected }) => {
-
-          console.log('a');
-
-          return (
-            <li {...props}>
-
-              {option.text}
-            </li>
-          );
-        }}
-        style={{ width: 500 }}
-        renderInput={(params) => (
-          <TextField {...params} label="Checkboxes" placeholder="Favorites" />
-        )}
-      /> */}
 
       <Typography variant='h6'>Datos APP</Typography>
       <pre>

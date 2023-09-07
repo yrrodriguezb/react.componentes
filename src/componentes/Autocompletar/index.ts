@@ -1,2 +1,2 @@
-export * from "./CentrosCostos"
 
+export * from './CentroCostos';

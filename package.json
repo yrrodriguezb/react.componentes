@@ -1,6 +1,6 @@
 {
   "name": "@yrrodriguezb/react-components",
-  "version": "0.1.40",
+  "version": "0.1.41",
   "private": false,
   "homepage": ".",
   "description": "Libreria de componentes en React",
@@ -9,6 +9,9 @@
   "files": [
     "./dist"
   ],
+  "exports": {
+    "componentes/*": "./dist/src/componentes/*"
+  },
   "devDependencies": {
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
@@ -50,6 +53,7 @@
     "start": "react-scripts start",
     "build": "npm run clean && react-scripts build",
     "test": "react-scripts test",
+    "test:debug": "react-scripts --inspect-brk test --runInBand --no-cache --watchAll",
     "eject": "react-scripts eject",
     "lib:dev": "rimraf ./dist/* && webpack --mode development",
     "lib:prod": "rimraf ./dist/* && webpack --mode=production",

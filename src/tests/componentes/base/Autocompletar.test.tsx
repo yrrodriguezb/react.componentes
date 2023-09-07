@@ -1,9 +1,10 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import Autocompletar from "../../../componentes/Base/Autocompletar";
-import { countryListTop10, numbers } from "../../data";
+import { countryListTop10, dataSource, numbers } from "../../data";
 import apiMock from '../../../utils/api'
 import { normalizeString } from "../../../utils/fn";
 import { ReactMuiRole } from "../../utils/enum/mui/roles";
+import { DataSource } from "../../../interfaces";
 
 
 jest.mock('../../../utils/api', () => ({
@@ -48,6 +49,39 @@ describe("Pruebas en <Autocompletar />", () => {
     fireEvent.change(element, { target: { value: pattern } });
 
     await waitFor(() => expect(screen.getAllByRole('listitem').length).toBe(filterData.length), optionsWaitFor)
+  });
+
+  test("Debe validar que el input text tenga el valor seleccionado segun propiedad renderText", async () => {
+    const renderText = (obj: DataSource) => `[Value]: ${obj.value} - [Text]: ${obj.text}`;
+
+    render(
+      <Autocompletar
+        data={ dataSource }
+        renderText={ renderText }
+      />
+    );
+
+    let items: HTMLElement[] = [];
+    const input: HTMLElement | null = screen.getByRole(ReactMuiRole.TextBox);
+    fireEvent.focusIn(input);
+
+    await waitFor(() => {
+      items = screen.getAllByRole(ReactMuiRole.ListItem);
+      expect(items.length).toBe(dataSource.length);
+    }, optionsWaitFor)
+
+    fireEvent.mouseDown(items[0]);
+    expect(input).toHaveValue(renderText(dataSource[0]));
+
+    fireEvent.blur(input)
+    fireEvent.focusIn(input);
+
+    await waitFor(() => {
+      items = screen.getAllByRole(ReactMuiRole.ListItem);
+    }, optionsWaitFor)
+
+    fireEvent.mouseDown(items[items.length - 1]);
+    expect(input).toHaveValue(renderText(dataSource[dataSource.length - 1]));
   });
 
   test("Debe ejecutar el servicio HTTP una sola vez", async () => {
@@ -165,4 +199,31 @@ describe("Pruebas en <Autocompletar />", () => {
     expect(selected).toHaveBeenCalledWith(emittedData);
   })
 
+  test("Debe ejecutar el servicio HTTP una sola vez en el primer focus del input text", async () => {
+    const calls = 1;
+    apiMockGet.mockReturnValue(response);
+
+    render(
+      <Autocompletar
+        service={{
+          url: 'https://localhost:8000',
+          executeOnFirstFocus: true
+        }}
+      />
+    );
+
+    const input: HTMLElement | null = screen.getByRole(ReactMuiRole.TextBox);
+    fireEvent.focusIn(input);
+
+    // se usa waitFor para esperar el primer llamado HTTP
+    await waitFor(() => expect(apiMockGet).toHaveBeenCalledTimes(calls), optionsWaitFor);
+
+    fireEvent.blur(input);
+    fireEvent.focusIn(input);
+    expect(apiMockGet).toHaveBeenCalledTimes(calls);
+
+    fireEvent.blur(input);
+    fireEvent.focusIn(input);
+    expect(apiMockGet).toHaveBeenCalledTimes(calls);
+  });
 })

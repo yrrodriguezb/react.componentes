@@ -10,6 +10,7 @@ export interface Service {
   url: string;
   searchParam?: string;
   executeOnce?: boolean;
+  executeOnFirstFocus?: boolean;
 };
 
 export interface ServiceProps extends Service, ToDataSource {

@@ -45,7 +45,7 @@ export interface MultipleProps {
 
 type OmitTextFieldProps =  'InputProps' | 'type' | 'onChange';
 
-interface InputTextProps extends Omit<TextFieldProps, OmitTextFieldProps> {}
+export interface InputTextProps extends Omit<TextFieldProps, OmitTextFieldProps> {}
 
 export interface TextProps {
   clearable?: boolean;
@@ -170,6 +170,8 @@ const InputText = React.forwardRef<HTMLDivElement, TextProps>((inProps, ref) => 
   )
 })
 
+InputText.displayName = "AyFAutocompletar_Input"
+
 const ListBoxItem = React.forwardRef<HTMLInputElement, ListBoxItemProps>((inProps, ref) => {
   const {
     checkeable = false,
@@ -177,7 +179,7 @@ const ListBoxItem = React.forwardRef<HTMLInputElement, ListBoxItemProps>((inProp
     index,
     option,
     onChange,
-    renderText = renderTextDefault,
+    renderText,
   } = inProps;
 
   const attrs = {
@@ -237,6 +239,8 @@ const ListBoxItem = React.forwardRef<HTMLInputElement, ListBoxItemProps>((inProp
   )
 })
 
+ListBoxItem.displayName = "AyFAutocompletar_ListBoxItem"
+
 export const Autocompletar = (inProps: AutocompletarProps) => {
   const {
     clearable = false,
@@ -261,6 +265,7 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     dataText = 'text',
     dataValue = 'value',
     executeOnce = false,
+    executeOnFirstFocus = false,
     searchParam = '',
     params = {},
     toDataSource
@@ -282,8 +287,9 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   const changeSelected = React.useRef<Boolean>(false);
   const values = React.useRef<any[]>([]);
   const firstFocus = React.useRef(true);
+  const firstRequestOnFocus = React.useRef(false);
 
-  const [ state, setState ] = React.useState<stateProps>({dataSource: data || [], open: false });
+  const [ state, setState ] = React.useState<stateProps>({ dataSource: data || [], open: false });
   const [ inputValue, setInputValue ] = React.useState<string>('' || value);
   const [ initialData, setinitialData ] = React.useState<DataSource[]>([]);
   const [ loading, setLoading ] = React.useState<boolean>(true);
@@ -291,22 +297,45 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   const isHandleInitialData = executeOnce || Boolean(data.length);
   const classNamePrefix = 'Mui';
 
+  const request = async (url: string, params: object) => {
+    return api.get(url, { params });
+  };
+
+  const resolveParams = (search: string) => {
+    if (isFunction(params)) {
+      return (params as CallableFunction)(search);
+    }
+
+    let mainParam: any = {};
+
+    if (searchParam) {
+      mainParam[searchParam] = search;
+    }
+
+    return {
+      ...mainParam,
+      ...params
+    }
+  }
+
   const onExecuteOnce = useEvent(async () => {
-    if (isHandleInitialData) {
+    const isFirstFocus = executeOnFirstFocus && firstRequestOnFocus.current;
+
+    if (isHandleInitialData || isFirstFocus) {
       let dataSource: DataSource[] = [];
 
-      if (executeOnce) {
-        const { data:datos } = await api.get(urlService, { params });
+      if (executeOnce || isFirstFocus) {
+        const { data:datos } =  await request(urlService, resolveParams(''));
         dataSource = toDataSource ? toDataSource(datos, returnObject) : mapDataSource(datos);
       } else if (data.length) {
         dataSource = toMap([ ...data ]);
       }
 
-      if (addListItemAll && dataSource.length > 0) {
-          dataSource.unshift({ text: textItemAll, value: '-1' });
+      if (addListItemAll && dataSource.length > 0 && dataSource.findIndex(e => e.value === '-1') === -1) {
+        dataSource.unshift({ text: textItemAll, value: '-1' });
       }
 
-      setState(s => ({ ...s, dataSource }));
+      setState(s => ({ open: isFirstFocus ? Boolean(dataSource.length) : s.open, dataSource }));
       setinitialData(dataSource);
     }
   });
@@ -358,6 +387,8 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   );
 
   const mapDataSource = (data: any[]) => {
+    data = data || [];
+
     if (isNotEmptyObject(service)) {
       if (data.length > 0 && isDataSource(data[0]))
         return data;
@@ -376,41 +407,30 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     }
   }
 
-  const resolveParams = (search: string) => {
-    if (isFunction(params)) {
-      return (params as CallableFunction)(search);
-    }
-
-    let mainParam: any = {};
-
-    if (searchParam) {
-      mainParam[searchParam] = search;
-    }
-
-    return {
-      ...mainParam,
-      ...params
-    }
-  }
-
   const getData = async (pattern: string) => {
     setLoading(true);
 
     if (pattern.trim().length) {
       if (urlService) {
         const params = resolveParams(pattern);
-        const { data:datos } = await api.get(urlService, { params });
+        const { data:datos } = await request(urlService, params);
 
         let dataSource: DataSource[] =  toDataSource ? toDataSource(datos, returnObject) : mapDataSource(datos);
         setState({ dataSource, open: Boolean(dataSource.length) });
       }
     }
     else {
-      setState({ dataSource: [], open: false });
+      setState({ dataSource: (executeOnFirstFocus ? state.dataSource : []), open: false });
     }
   }
 
   const resolveData = () => {
+    if (executeOnFirstFocus) {
+      // Si el input text tiene valor y encontro datos, devuelve los datos de la ultima consulta
+      if (inputRef.current?.value && state.dataSource.length > 0)
+        return state.dataSource;
+      return initialData;
+    }
     return isHandleInitialData ? initialData : data;
   }
 
@@ -440,6 +460,7 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   })
 
   const handleInputChange = (value: string) => {
+    cursorRef.current = -1;
     setLoading(true);
 
     if (value === '') {
@@ -478,7 +499,6 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     if (isMultiple && changeSelected.current) {
       changeSelected.current = false;
       onSelected(returnAsString ?  values.current.join(',') : values.current);
-      setInputValue(renderTextSelected());
       setState({ dataSource: resolveData(), open: false });
       return;
     }
@@ -538,6 +558,8 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   const handleInputClear = () => {
     if (!executeOnce && !isMultiple) {
       setState({ dataSource: [], open: false })
+    } else if (executeOnFirstFocus) {
+      setState({ dataSource: initialData, open: Boolean(initialData.length) })
     }
   }
 
@@ -574,8 +596,14 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
 
     setLoading(true);
 
-    if (isHandleInitialData) {
-      setState({ ...state, open: Boolean(state.dataSource.length) })
+    if (!firstRequestOnFocus.current && executeOnFirstFocus) {
+      firstRequestOnFocus.current = true;
+      onExecuteOnce();
+    }
+
+    if (isHandleInitialData || (executeOnFirstFocus && firstRequestOnFocus.current)) {
+      var dataSource = resolveData();
+      setState(s => ({ dataSource, open: Boolean(dataSource.length) }));
     }
   }
 
@@ -595,10 +623,18 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   const handleFilterClear = (event: any) => {
     event.preventDefault();
 
+    if(inputRef.current) {
+      inputRef.current.value = '';
+    }
+
     if (values.current.length) {
       values.current = [];
       setLoading(true);
       setState({ dataSource: resolveData(), open: true });
+      setInputValue('');
+    }
+    else if (executeOnFirstFocus) {
+      setState({ dataSource: initialData, open: true });
       setInputValue('');
     }
   }
@@ -611,7 +647,7 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
       overflow: 'auto',
       position: 'relative' as 'relative',
       width: Boolean(panelWidth) ? panelWidth : rootInputRef.current?.offsetWidth,
-      zIndex: 'modal',
+      zIndex: 'modal'
     }
   }
 
@@ -774,14 +810,18 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   }
 
   const resolveInputValue = () => {
+    return findValue(inputValue);
+  }
+
+  const resolvePlaceHolder = () => {
+    const placeholder = inputProps?.placeholder || '';
     if (isMultiple) {
       if (values.current.length === 0){
-        return '';
+        return placeholder;
       }
       return inputValue || renderTextSelected();
     }
-
-    return findValue(inputValue);
+    return placeholder;
   }
 
   return (
@@ -796,6 +836,7 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
         inputProps={{
           ...inputProps,
           inputRef: inputRef,
+          placeholder: resolvePlaceHolder(),
           onFocus: handleInputFocus,
           onKeyDown: handleInputKeyDown,
           onBlur: handleInputBlur
@@ -811,15 +852,14 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
       />
       {
         state.open && (
-          <Fade in unmountOnExit>
-            <Stack sx={{ boxShadow: 10, background: '#FFF', position: 'absolute' }}>
+          <Fade in unmountOnExit style={{ zIndex: 'modal' }}>
+            <Stack sx={{ boxShadow: 10, background: '#FFF', position: 'absolute', zIndex: 'modal'}}>
               { loading ?
                 <AutocompletarSkeleton /> :
                 <>
                   <List { ...getListProps() }>
                   {
-                    state.dataSource.map((option, index) => {
-                      return (
+                    state.dataSource.map((option, index) => (
                       <ListBoxItem
                         key={ option.value }
                         index={ index }
@@ -828,8 +868,9 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
                         onChange={ handleSelected }
                         selected={ isSelected(option) }
                         ref={ option.value === '-1' ? checkboxAllRef : null }
+                        renderText={ renderText }
                       />
-                    )})
+                    ))
                   }
                   </List>
                   { isMultiple && <ListBoxActions /> }

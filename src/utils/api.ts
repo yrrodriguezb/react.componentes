@@ -1,4 +1,4 @@
-import axios, { CreateAxiosDefaults } from "axios";
+import axios, { AxiosInstance, CreateAxiosDefaults } from "axios";
 import '../utils/global'
 
 let headers: any = {};
@@ -18,6 +18,10 @@ let configAxios: CreateAxiosDefaults = {
   headers
 };
 
-const api = axios.create(configAxios);
+const api: AxiosInstance = axios.create(configAxios);
+
+export {
+  api
+}
 
 export default api;

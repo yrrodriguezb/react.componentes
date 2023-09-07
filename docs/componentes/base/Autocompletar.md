@@ -24,15 +24,16 @@ Componente que permite filtrar datos de tipo **DataSource** para mostralos en un
 
 ## Service Props
 
-| Nombre         | Tipo        | Valor por defecto                   | Descripción |
-|----------------|-------------|-------------------------------------|-------------|
-| executeOne     | boolean     | false                               | Ejecutar el servicio una unica vez, cuando el componente es montado |
-| dataText       | string      | 'text'                              | Texto a mostrar en el elemento de la lista |
-| dataValue      | string      | 'value'                             | Valor del elemento de la lista.  |
-| params         | Params      | {}                                  | Objeto o funcion que retorna un objeto para enviar en la petición HTTP según método get de axios. |
-| url            | string      |                                     | URL servicio HTTP  |
-| searchParam    | string      | ''                                  | Parametro de busqueda que se utiliza en el servicio HTTP |
-| toDataSource   | function    | (data, returnObjet) => DataSource[] | Funciona para trasformar los datos del servicio HTTP en un DataSource válido |
+| Nombre              | Tipo        | Valor por defecto                   | Descripción |
+|---------------------|-------------|-------------------------------------|-------------|
+| dataText            | string      | 'text'                              | Texto a mostrar en el elemento de la lista |
+| dataValue           | string      | 'value'                             | Valor del elemento de la lista.  |
+| executeOne          | boolean     | false                               | Ejecutar el servicio una unica vez, cuando el componente es montado |
+| executeOnFirstFocus | boolean     | false                               | Ejecutar el servicio una vez, cuando el input text obtiene el foco por primera vez. |
+| params              | Params      | {}                                  | Objeto o funcion que retorna un objeto para enviar en la petición HTTP según método get de axios. |
+| url                 | string      |                                     | URL servicio HTTP  |
+| searchParam         | string      | ''                                  | Parametro de busqueda que se utiliza en el servicio HTTP |
+| toDataSource        | function    | (data, returnObjet) => DataSource[] | Funciona para trasformar los datos del servicio HTTP en un DataSource válido |
 
 ## Multiple Props
 

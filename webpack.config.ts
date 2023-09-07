@@ -6,7 +6,7 @@ import TerserPlugin from "terser-webpack-plugin";
 
 
 const config: webpack.Configuration = {
-  entry: './src/index.ts',
+  entry: './src/main.ts',
   devtool: 'source-map',
   mode: 'development',
   module: {
