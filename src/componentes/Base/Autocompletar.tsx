@@ -1,6 +1,7 @@
 import React from 'react'
 import { Clear, Search } from '@mui/icons-material';
 import { Fade, Stack } from '@mui/material';
+import Popper from '@mui/material/Popper';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box'
 import Checkbox from '@mui/material/Checkbox';
@@ -62,11 +63,13 @@ export interface AutocompletarProps {
   clearable?: boolean;
   data?: Array<DataSource | any>;
   delay?: number;
+  extraData?: Array<DataSource>;
   hideIcon?: boolean;
   iconElement?: () => JSX.Element;
   id?: string;
   inputProps?: InputTextProps;
   multiple?: boolean | MultipleProps;
+  onInputClear?: () => void;
   onSelected?: (element: any) => void;
   panelWidth?: number | string;
   renderText?: (obj: DataSource | any) => string;
@@ -133,7 +136,7 @@ const InputText = React.forwardRef<HTMLDivElement, TextProps>((inProps, ref) => 
         size='small'
         tabIndex={ -1 }
       >
-        <Clear color='disabled' />
+        <Clear color='disabled' fontSize='small'/>
       </IconButton>
     );
   }
@@ -246,11 +249,13 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     clearable = false,
     data = [],
     delay = 500,
-    iconElement:MainIcon = () => <Search color='disabled' />,
+    extraData = [],
+    iconElement:MainIcon = () => <Search color='disabled' fontSize='small' />,
     hideIcon = false,
     id,
     inputProps,
     multiple,
+    onInputClear,
     onSelected = defaultFunction,
     renderText =  renderTextDefault,
     returnObject = false,
@@ -278,6 +283,7 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     textSelected,
   } = (multiple || {}) as MultipleProps;
 
+  const rootRef = React.useRef<HTMLDivElement>( null );
   const rootInputRef = React.useRef<HTMLDivElement>( null );
   const inputRef = React.useRef<HTMLInputElement>( null );
   const listRef = React.useRef<HTMLUListElement>( null );
@@ -290,12 +296,14 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   const firstRequestOnFocus = React.useRef(false);
 
   const [ state, setState ] = React.useState<stateProps>({ dataSource: data || [], open: false });
+  const [ anchorEl, setAnchorEl ] = React.useState<null | HTMLElement>(null);
   const [ inputValue, setInputValue ] = React.useState<string>('' || value);
   const [ initialData, setinitialData ] = React.useState<DataSource[]>([]);
   const [ loading, setLoading ] = React.useState<boolean>(true);
   const isMultiple = isBoolean(multiple) || isNotEmptyObject(multiple);
   const isHandleInitialData = executeOnce || Boolean(data.length);
   const classNamePrefix = 'Mui';
+  const openPoper = Boolean(anchorEl);
 
   const request = async (url: string, params: object) => {
     return api.get(url, { params });
@@ -318,7 +326,35 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     }
   }
 
+  const validateAndJoinExtraData = (items: DataSource[]) => {
+    if (extraData.length && executeOnce){
+      const first = [ ...items ];
+      const second = [ ...extraData ];
+
+      const intersection = first.filter((f: DataSource) => second.some((s: DataSource) => f.value === s.value ));
+
+      if (intersection.length) {
+        console.error("Datos contenidos en el datasource", intersection);
+        throw new Error('La propiedad extraData contiene objetos con el mismo value en el datasource obtenido')
+      }
+
+      const notUnique = second.filter((ds: DataSource, index: number, arr: DataSource[]) => arr.some((s: DataSource, i: number) => ds.value === s.value && i > index));
+
+      if (notUnique.length) {
+        console.error("Datos duplicados según propiedad [value] en la propiedad extraData", notUnique);
+        throw new Error('La propiedad value debe ser única en la propiedad extraData')
+      }
+
+      items.unshift(...second);
+    }
+  }
+
   const onExecuteOnce = useEvent(async () => {
+    // Solo se ejecuta una vez el servicio en el primer foco del input
+    if (executeOnce && executeOnFirstFocus && !firstRequestOnFocus.current) {
+      return;
+    }
+
     const isFirstFocus = executeOnFirstFocus && firstRequestOnFocus.current;
 
     if (isHandleInitialData || isFirstFocus) {
@@ -335,6 +371,7 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
         dataSource.unshift({ text: textItemAll, value: '-1' });
       }
 
+      validateAndJoinExtraData(dataSource);
       setState(s => ({ open: isFirstFocus ? Boolean(dataSource.length) : s.open, dataSource }));
       setinitialData(dataSource);
     }
@@ -460,6 +497,10 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   })
 
   const handleInputChange = (value: string) => {
+    if (!anchorEl) {
+      setAnchorEl(rootRef.current);
+    }
+
     cursorRef.current = -1;
     setLoading(true);
 
@@ -556,6 +597,12 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   }
 
   const handleInputClear = () => {
+    setInputValue('');
+
+    if (onInputClear) {
+      onInputClear();
+    }
+
     if (!executeOnce && !isMultiple) {
       setState({ dataSource: [], open: false })
     } else if (executeOnFirstFocus) {
@@ -590,6 +637,10 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   }
 
   const handleInputFocus = (e: any) => {
+    if (!anchorEl) {
+      setAnchorEl(rootRef.current);
+    }
+
     if (state.open) {
       return;
     }
@@ -647,18 +698,20 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
       overflow: 'auto',
       position: 'relative' as 'relative',
       width: Boolean(panelWidth) ? panelWidth : rootInputRef.current?.offsetWidth,
-      zIndex: 'modal'
+      //zIndex: 'modal'
     }
   }
 
   const getStylesRoot = () => {
     let style: any = {
-      display: inputProps?.fullWidth ? 'block' :  'inline-block',
+      display: inputProps?.fullWidth ? 'block' :  'inline-block'
     }
 
     if (inputProps?.fullWidth) {
       style.width =  '100%'
     }
+
+
 
     return style;
   }
@@ -674,6 +727,11 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
         event.preventDefault()
       }
     }
+  }
+
+  const getListContainerProps = () => {
+    const base = { boxShadow: 10, background: '#FFF' };
+    return base;
   }
 
   const handleClick = (event: any) => {
@@ -698,6 +756,8 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   }
 
   const handleMouseDown = (event: any) => {
+    setAnchorEl(event.currentTarget);
+
     if (!event.currentTarget.contains(event.target)) {
       return;
     }
@@ -799,7 +859,7 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   }
 
   const findValue = (str: string) => {
-    if ((+str) && executeOnce) {
+    if ((+str) && (executeOnce || data.length)) {
       const option = state.dataSource.find(o => normalizeString(str) === normalizeString(o.value));
 
       if (option) {
@@ -825,62 +885,68 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   }
 
   return (
-    <div
-      id={ id }
-      style={ getStylesRoot() }
-      onClick={ handleClick }
-      onMouseDown={ handleMouseDown }
-    >
-      <InputText
-        { ...props }
-        inputProps={{
-          ...inputProps,
-          inputRef: inputRef,
-          placeholder: resolvePlaceHolder(),
-          onFocus: handleInputFocus,
-          onKeyDown: handleInputKeyDown,
-          onBlur: handleInputBlur
-        }}
-        clearable={ clearable }
-        delay={ delay }
-        hideIcon={ hideIcon }
-        icon={ MainIcon }
-        onChange={ handleInputChange }
-        onClear={ handleInputClear }
-        ref={ rootInputRef }
-        defaultValue={ resolveInputValue() }
-      />
+    <>
+      <div
+        id={ id }
+        style={ getStylesRoot() }
+        onClick={ handleClick }
+        onMouseDown={ handleMouseDown }
+        ref={ rootRef }
+      >
+        <InputText
+          { ...props }
+          inputProps={{
+            ...inputProps,
+            inputRef: inputRef,
+            placeholder: resolvePlaceHolder(),
+            onFocus: handleInputFocus,
+            onKeyDown: handleInputKeyDown,
+            onBlur: handleInputBlur
+          }}
+          clearable={ clearable }
+          delay={ delay }
+          hideIcon={ hideIcon }
+          icon={ MainIcon }
+          onChange={ handleInputChange }
+          onClear={ handleInputClear }
+          ref={ rootInputRef }
+          defaultValue={ resolveInputValue() }
+        />
+      </div>
+
       {
         state.open && (
-          <Fade in unmountOnExit style={{ zIndex: 'modal' }}>
-            <Stack sx={{ boxShadow: 10, background: '#FFF', position: 'absolute', zIndex: 'modal'}}>
-              { loading ?
-                <AutocompletarSkeleton /> :
-                <>
-                  <List { ...getListProps() }>
-                  {
-                    state.dataSource.map((option, index) => (
-                      <ListBoxItem
-                        key={ option.value }
-                        index={ index }
-                        option={ option }
-                        checkeable={ isMultiple }
-                        onChange={ handleSelected }
-                        selected={ isSelected(option) }
-                        ref={ option.value === '-1' ? checkboxAllRef : null }
-                        renderText={ renderText }
-                      />
-                    ))
-                  }
-                  </List>
-                  { isMultiple && <ListBoxActions /> }
-                </>
-            }
-            </Stack>
-          </Fade>
+          <Popper open={ openPoper } anchorEl={ anchorEl }>
+            <Fade in unmountOnExit>
+              <Stack sx={{ ...getListContainerProps() }}>
+                { loading ?
+                  <AutocompletarSkeleton /> :
+                  <>
+                    <List { ...getListProps() }>
+                    {
+                      state.dataSource.map((option, index) => (
+                        <ListBoxItem
+                          key={ option.value }
+                          index={ index }
+                          option={ option }
+                          checkeable={ isMultiple }
+                          onChange={ handleSelected }
+                          selected={ isSelected(option) }
+                          ref={ option.value === '-1' ? checkboxAllRef : null }
+                          renderText={ renderText }
+                        />
+                      ))
+                    }
+                    </List>
+                    { isMultiple && <ListBoxActions /> }
+                  </>
+              }
+              </Stack>
+            </Fade>
+          </Popper>
         )
       }
-    </div>
+    </>
   )
 }
 

@@ -24,10 +24,22 @@
     "typeRoots": [
       "./node_modules/@types",
       "./types"
-    ]
+    ],
+
+    "baseUrl": "https://github.com/yrrodriguezb/react.componentes",
+    "paths": {
+      "@yrrodriguezb/react-components/componentes": [ "./src/componentes" ],
+      "@yrrodriguezb/react-components/componentes/*": [ "./src/componentes/*" ],
+      "@yrrodriguezb/react-components/hooks": [ "./src/hooks" ],
+      "@yrrodriguezb/react-components/hooks/*": [ "./src/hooks/*" ],
+      "@yrrodriguezb/react-components/utils": [ "./src/utils" ],
+      "@yrrodriguezb/react-components/utils/*": [ "./src/utils/*" ]
+    }
   },
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "src/test/*",
+    "dist"
   ],
   "include": [
     "src",

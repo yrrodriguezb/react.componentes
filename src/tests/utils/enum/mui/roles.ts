@@ -7,6 +7,7 @@ export enum ReactMuiRole {
   List      = "list",
   ListBox   = "listbox",
   ListItem  = "listitem",
+  MenuItem  = 'menuitem',
   Option    = "option",
   Root      = "root",
   TextBox   = "textbox"

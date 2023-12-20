@@ -15,7 +15,7 @@ const response = {
   data: countryListTop10.map(country => ({ text: country, value: country }))
 };
 
-const apiMockGet = apiMock.get as jest.Mock;
+const httpMock = apiMock.get as jest.Mock;
 
 describe("Pruebas en <Autocompletar />", () => {
   const testId = "autocompletar-id";
@@ -48,7 +48,7 @@ describe("Pruebas en <Autocompletar />", () => {
 
     fireEvent.change(element, { target: { value: pattern } });
 
-    await waitFor(() => expect(screen.getAllByRole('listitem').length).toBe(filterData.length), optionsWaitFor)
+    await waitFor(() => expect(screen.getAllByRole(ReactMuiRole.ListItem).length).toBe(filterData.length), optionsWaitFor)
   });
 
   test("Debe validar que el input text tenga el valor seleccionado segun propiedad renderText", async () => {
@@ -85,23 +85,23 @@ describe("Pruebas en <Autocompletar />", () => {
   });
 
   test("Debe ejecutar el servicio HTTP una sola vez", async () => {
-    apiMockGet.mockImplementation(() => response);
+    httpMock.mockImplementation(() => response);
 
     render(<Autocompletar
       service={{
         url: 'https://localhost:8000',
-        executeOnce: true,
+        executeOnce: true
       }}
     />);
 
-    expect(apiMockGet).toHaveBeenCalledTimes(1);
-    expect(apiMockGet).not.toHaveBeenCalledTimes(2);
-    expect(apiMockGet).toHaveBeenCalledWith('https://localhost:8000',  { params: {} });
-    await waitFor(() => expect(apiMockGet).toHaveReturnedWith(response), optionsWaitFor);
+    expect(httpMock).toHaveBeenCalledTimes(1);
+    expect(httpMock).not.toHaveBeenCalledTimes(2);
+    expect(httpMock).toHaveBeenCalledWith('https://localhost:8000',  { params: {} });
+    await waitFor(() => expect(httpMock).toHaveReturnedWith(response), optionsWaitFor);
   });
 
   test('Debe ejecutar el servicio HTTP cada vez que cambie el input text segun delay', async () => {
-    apiMockGet.mockReturnValue(response)
+    httpMock.mockReturnValue(response)
 
     render(<Autocompletar
       data-testid={ testId }
@@ -115,23 +115,21 @@ describe("Pruebas en <Autocompletar />", () => {
     const element: HTMLElement | null = screen.getByRole(ReactMuiRole.TextBox);
 
     fireEvent.change(element, { target: { value: 'a' } });
-    await waitFor(() => expect(apiMockGet).toHaveBeenCalledWith('https://localhost:8000',  { params: { q : 'a' } }));
+    await waitFor(() => expect(httpMock).toHaveBeenCalledWith('https://localhost:8000',  { params: { q : 'a' } }));
 
     fireEvent.change(element, { target: { value: 'af' } });
-    await waitFor(() => expect(apiMockGet).toHaveBeenCalledWith('https://localhost:8000',  { params: { q : 'af' } }));
+    await waitFor(() => expect(httpMock).toHaveBeenCalledWith('https://localhost:8000',  { params: { q : 'af' } }));
 
-    expect(apiMockGet).toHaveBeenCalledTimes(2);
+    expect(httpMock).toHaveBeenCalledTimes(2);
 
     fireEvent.change(element, { target: { value: 'afg' } });
     fireEvent.change(element, { target: { value: 'afga' } });
-    await waitFor(() => expect(apiMockGet).toHaveBeenCalledWith('https://localhost:8000',  { params: { q : 'afga' } }));
+    await waitFor(() => expect(httpMock).toHaveBeenCalledWith('https://localhost:8000',  { params: { q : 'afga' } }));
 
-    expect(apiMockGet).toHaveBeenCalledTimes(3);
+    expect(httpMock).toHaveBeenCalledTimes(3);
   });
 
   test('Debe permitir seleccionar de forma multiple', async () => {
-    apiMockGet.mockReturnValue(response);
-
     const Component = () => (
       <Autocompletar
         data-testid={ testId }
@@ -142,14 +140,12 @@ describe("Pruebas en <Autocompletar />", () => {
       />
     );
 
-    const { rerender } = render(<Component />);
+    render(<Component />);
     const element: HTMLElement | null = screen.getByRole(ReactMuiRole.TextBox);
     fireEvent.focusIn(element);
 
     const skeleton: HTMLElement | null = screen.queryByRole(ReactMuiRole.Container);
     expect(skeleton).toBeInTheDocument();
-
-    rerender(<Component />);
 
     await waitFor(() => {
       expect(skeleton).not.toBeInTheDocument();
@@ -178,10 +174,9 @@ describe("Pruebas en <Autocompletar />", () => {
       />
     );
 
-    const { rerender } = render(<Component />);
+    render(<Component />);
     const element: HTMLElement | null = screen.getByRole(ReactMuiRole.TextBox);
     fireEvent.focusIn(element);
-    rerender(<Component />);
 
     let checkboxList: HTMLElement[] | null = [];
     const emittedData = numbers.map(d => d.value).join(',');
@@ -192,16 +187,15 @@ describe("Pruebas en <Autocompletar />", () => {
     })
 
     fireEvent.mouseDown(checkboxList[0]);
-    rerender(<Component/>);
     fireEvent.blur(element)
 
     expect(selected).toHaveBeenCalledTimes(1);
     expect(selected).toHaveBeenCalledWith(emittedData);
-  })
+  });
 
-  test("Debe ejecutar el servicio HTTP una sola vez en el primer focus del input text", async () => {
-    const calls = 1;
-    apiMockGet.mockReturnValue(response);
+  test("Debe ejecutar el servicio HTTP una sola vez en el primer focus del input text y cada vez que se escriba", async () => {
+    let calls = 1;
+    httpMock.mockReturnValue(response);
 
     render(
       <Autocompletar
@@ -216,14 +210,85 @@ describe("Pruebas en <Autocompletar />", () => {
     fireEvent.focusIn(input);
 
     // se usa waitFor para esperar el primer llamado HTTP
-    await waitFor(() => expect(apiMockGet).toHaveBeenCalledTimes(calls), optionsWaitFor);
+    await waitFor(() => expect(httpMock).toHaveBeenCalledTimes(calls), optionsWaitFor);
 
     fireEvent.blur(input);
     fireEvent.focusIn(input);
-    expect(apiMockGet).toHaveBeenCalledTimes(calls);
+    expect(httpMock).toHaveBeenCalledTimes(calls);
 
     fireEvent.blur(input);
     fireEvent.focusIn(input);
-    expect(apiMockGet).toHaveBeenCalledTimes(calls);
+    expect(httpMock).toHaveBeenCalledTimes(calls);
+
+    calls = calls + 1;
+    fireEvent.change(input, { target: { value: "Fin" } });
+    await waitFor(() => expect(httpMock).toHaveBeenCalledTimes(calls), optionsWaitFor);
+
+    calls = calls + 1;
+    fireEvent.change(input, { target: { value: "Financiero" } });
+    await waitFor(() => expect(httpMock).toHaveBeenCalledTimes(calls), optionsWaitFor);
+  });
+
+  test("Debe ejecutar el servicio HTTP una sola vez en el primer focus del input text cuando executeOnFirstFocus y executeOnce son verdaderas", async () => {
+    let calls = 1;
+    httpMock.mockReturnValue(response);
+
+    render(
+      <Autocompletar
+        service={{
+          url: 'https://localhost:8000',
+          executeOnFirstFocus: true,
+          executeOnce: true
+        }}
+      />
+    );
+
+    const input: HTMLElement | null = screen.getByRole(ReactMuiRole.TextBox);
+    fireEvent.focusIn(input);
+
+    // se usa waitFor para esperar el primer llamado HTTP
+    await waitFor(() => expect(httpMock).toHaveBeenCalledTimes(calls), optionsWaitFor);
+
+    fireEvent.blur(input);
+    fireEvent.focusIn(input);
+    expect(httpMock).toHaveBeenCalledTimes(calls);
+
+    fireEvent.change(input, { target: { value: "Fin" } });
+    await waitFor(() => expect(httpMock).toHaveBeenCalledTimes(calls), optionsWaitFor);
+
+    fireEvent.change(input, { target: { value: "Financiero" } });
+    await waitFor(() => expect(httpMock).toHaveBeenCalledTimes(calls), optionsWaitFor);
+  });
+
+
+  test("Debe mostrar el valor del input segun propiedad value si el value esta el datasource", async () => {
+    const value = '10';
+    const renderText = (obj: DataSource) => `[Value]: ${obj.value} - [Text]: ${obj.text}`;
+
+    render(
+      <Autocompletar
+        data={ dataSource }
+        renderText={ renderText }
+        value={ value }
+      />
+    );
+
+    const obj = dataSource.find((el: DataSource) => el.value === value);
+    let  input: HTMLElement | null = screen.getByRole(ReactMuiRole.TextBox);
+    expect(input).toHaveValue(renderText(obj!));
+  });
+
+  test("Debe mostrar el valor del input segun propiedad value si el value no se encuentra en el datasource", async () => {
+    const value = "Pruebas Value Input";
+
+    render(
+      <Autocompletar
+        data={ dataSource }
+        value={ value }
+      />
+    );
+
+    const input = screen.getByRole(ReactMuiRole.TextBox);
+    expect(input).toHaveValue(value);
   });
 })

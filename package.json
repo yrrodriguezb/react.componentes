@@ -1,11 +1,12 @@
 {
   "name": "@yrrodriguezb/react-components",
-  "version": "0.1.41",
+  "version": "0.1.59",
   "private": false,
   "homepage": ".",
   "description": "Libreria de componentes en React",
   "main": "./dist/index.js",
   "types": "./dist/src/index.d.ts",
+  "module": "./dist/index.js",
   "files": [
     "./dist"
   ],
@@ -40,13 +41,13 @@
     "web-vitals": "^2.1.4"
   },
   "peerDependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "@emotion/react": "^11.10.4",
     "@emotion/styled": "^11.10.4",
     "@fontsource/roboto": "^4.5.8",
     "@mui/icons-material": "^5.10.9",
-    "@mui/material": "^5.10.10"
+    "@mui/material": "^5.10.10",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "scripts": {
     "clean": "rimraf ./buld/*",

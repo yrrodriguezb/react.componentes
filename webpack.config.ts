@@ -6,7 +6,7 @@ import TerserPlugin from "terser-webpack-plugin";
 
 
 const config: webpack.Configuration = {
-  entry: './src/main.ts',
+  entry: './src/index.ts',
   devtool: 'source-map',
   mode: 'development',
   module: {
@@ -34,6 +34,10 @@ const config: webpack.Configuration = {
         ],
         exclude: /node_modules/,
       },
+      {
+        test: /\.(png|svg|jpg|jpeg|gif)$/i,
+        type: 'asset/resource',
+      }
     ],
   },
   resolve: {
@@ -48,7 +52,8 @@ const config: webpack.Configuration = {
     'react-dom',
     'react-dom/client',
     '@emotion/react',
-    '@emotion/styled'
+    '@emotion/styled',
+    "@mui/material"
   ],
   output: {
     filename: 'index.js',
