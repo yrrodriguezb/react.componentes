@@ -112,7 +112,7 @@ export const TablaFiltroBase = function TablaFiltroBase(inProps: TablaFiltroBase
     headers = defaultHeaders,
     inDialog = false,
     onClose = () => {},
-    onSelected = (data: DatosEmitidos) => {},
+    onSelected = (_data: DatosEmitidos) => {},
     open = false,
     returnAsString = false,
     title,
@@ -137,7 +137,7 @@ export const TablaFiltroBase = function TablaFiltroBase(inProps: TablaFiltroBase
     setSelected([]);
   };
 
-  const handleClick = (event: React.MouseEvent<unknown>, name: string) => {
+  const handleClick = (_event: React.MouseEvent<unknown>, name: string) => {
     const selectedIndex = selected.indexOf(name);
     let newSelected: any[] = [];
 

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import TablaFiltroBase, { TablaFiltroBaseProps } from "../../../componentes/Base/TablaFiltroBase";
+import TablaFiltroBase, { TablaFiltroBaseProps } from "../../../src/componentes/Base/TablaFiltroBase";
 import { dataSource } from "../../data/";
 
 const testidComponent = "root";

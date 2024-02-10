@@ -1,4 +1,4 @@
-import DataSource from "../../../interfaces/base/datasource";
+import DataSource from "../../../src/interfaces/base/datasource";
 
 
 export const dataSource: DataSource[] = [

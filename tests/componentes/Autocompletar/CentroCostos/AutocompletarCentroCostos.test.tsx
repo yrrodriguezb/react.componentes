@@ -1,7 +1,7 @@
 import {  cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import AutocompletarCentroCostos from "../../../../componentes/Autocompletar/CentroCostos/AutocompletarCentroCostos";
+import AutocompletarCentroCostos from "../../../../src/componentes/Autocompletar/CentroCostos/AutocompletarCentroCostos";
 import { ReactMuiRole } from "../../../utils/enum/mui/roles";
-import apiMock from "../../../../utils/api";
+import apiMock from "../../../../src/utils/api";
 import { dataSource } from "../../../data";
 
 const onSelected = jest.fn();
@@ -13,7 +13,7 @@ const response = {
   data: dataSource.map((el: any) => ({ id: el.value, title: el.text }))
 }
 
-jest.mock('../../../../utils/api', () => ({
+jest.mock('../../../../src/utils/api', () => ({
   get: jest.fn()
 }));
 

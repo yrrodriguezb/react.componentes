@@ -10,7 +10,7 @@ export function isNotObject(obj: any) {
 }
 
 export function isEmptyObject(obj: any) {
-  for (const key in obj) {
+  for (const _key in obj) {
     return false;
   }
 
@@ -33,7 +33,7 @@ export function isBoolean(obj: any) {
   return typeof obj === "boolean";
 };
 
-export function defaultFunction(...args: any) { };
+export function defaultFunction(..._args: any) { };
 
 export function normalizeString(str: string | number) {
   return str

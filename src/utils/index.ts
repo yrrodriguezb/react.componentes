@@ -36,11 +36,12 @@ export {
   range
 } from './array'
 
-export {
-  AYF
-} from './global';
+export * from './global';
 
 export {
   getRandomInt,
   unique
 } from './random';
+
+export * from './constantes';
+export * from './regex';

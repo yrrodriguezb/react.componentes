@@ -6,7 +6,7 @@ type Fn = (...args: any[]) => void;
 // You're not expected to write code like this yourself.
 
 export function useEvent<Func extends Fn>(fn: Func) {
-  const ref = useRef((...args: any[]) => {});
+  const ref = useRef((..._args: any[]) => {});
 
   useInsertionEffect(() => {
     ref.current = fn;

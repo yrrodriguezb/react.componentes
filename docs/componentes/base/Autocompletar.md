@@ -4,30 +4,37 @@ Componente que permite filtrar datos de tipo **DataSource** para mostralos en un
 
 ## Props
 
-| Nombre         | Tipo                        | Valor por defecto | Descripción   |
-|----------------|-----------------------------|-------------------|---------------|
-| clearable      | boolean                     | false             | Agrega un botón para permite limpiar el input. Si se configura la propiedad `multiple` renderiza un componente en la parte inferior para permitir limpiar todos los elementos seleccionados |
-| data           | DataSource[]                | []                | Fuente de datos para ser renderizados.  |
-| delay          | number                      | 500               | Tiempo de espera para realizar la carga de datos  |
-| extraData      | DataSource[]                | []                | Datos adicionales para agregar en el datasource obtenido en el servicio HTTP. Aplica únicamente si el servicio se ejecuta una sola vez según propiedad `executeOnce`. Estos datos siempre se incluyen al inicio de la lista  |
-| iconElement    | () => JSX.Element           | () => SearchIcon  | Icono al final del input según propiedad endAdornment de react mui |
-| hideIcon       | boolean                     | false             | Oculta el icono principal al final del input |
-| id             | string                      |                   | Identificador elemento root  |
-| inputProps     | InputTextProps              | {}                | Propiedades Input, extiende de la interface TextFieldProps omitiendo eventos que se usan en componente por defecto |
-| multiple       | boolean, multipleProps      | {}                | Permite seleccionar multiples opciones. La propiedad `returnObject` es ignorada al emitir los datos seleccionados |
-| onInputClear   | () => void                  |                   | Función que se ejecuta cuando se limpia el input text |
-| onSelected     | () => void                  | () => {}          | Función que se ejecuta con el valor seleccionado |
-| panelWidth     | number, string              |                   | Ancho panel de lista con los datos  |
-| renderText     | (obj: DataSource) => string | (obj) => obj.text | Función que renderiza el texto del elemento ListItem y el texto al seleccionar, por defecto el valor en service.dataValueText |
-| returnObject   | boolean                     | false             | Retorna el objeto original cuando los datos provienen de un servicio HTTP en una propiedad llamada `original`. |
-| service        | ServiceProps                | {}                | Propiedades del servicio HTTP. |
-| value          | string                      | ''                | Valor por defecto en el input text. Si el autocompletar está configurado para ejecutarse una vez o contiene datos iniciales, se asignará el primer valor que coincida con el id en la fuente de datos, de lo contrario se asigna el texto correspondiente. |
+| Nombre             | Tipo                        | Valor por defecto | Descripción   |
+|--------------------|-----------------------------|-------------------|---------------|
+| assignFirstValue   | boolean                     | false             | Asigna el primer valor que conincida con la propiedad `value` del `datasource` asignado |
+| clearable          | boolean                     | false             | Agrega un botón para permite limpiar el input. Si se configura la propiedad `multiple` renderiza un componente en la parte inferior para permitir limpiar todos los elementos seleccionados |
+| clearInputOnSelect | boolean                     | false             | Limpia el input text al seleccionar el item. |
+| data               | DataSource[]                | []                | Fuente de datos para ser renderizados.  |
+| delay              | number                      | 500               | Tiempo de espera para realizar la carga de datos  |
+| disablePortal      | boolean                     | false             | Permite definir si la lista del componente se muestra en la jerarquía DOM del componente principal |
+| executeInputClearIfEmpty | boolean                     | false             | Dispara la funcion de la propiedad `onInputClear` si el input tiene un valor de vacío |
+| extraData          | DataSource[]                | []                | Datos adicionales para agregar en el datasource obtenido en el servicio HTTP. Aplica únicamente si el servicio se ejecuta una sola vez según propiedad `executeOnce`. Estos datos siempre se incluyen al inicio de la lista  |
+| filter             | (pattern: string, obj: Datasource) => boolean | | Función que permite personalizar la busqueda de datos. Aplica únicamente si el servicio se ejecuta una sola vez según propiedad `executeOnce` o los datos son fijos con la propiedad `data`| 
+| iconElement        | () => JSX.Element           | () => SearchIcon  | Icono al final del input según propiedad endAdornment de react mui |
+| hideIcon           | boolean                     | false             | Oculta el icono principal al final del input |
+| id                 | string                      |                   | Identificador elemento root  |
+| inputProps         | InputTextProps              | {}                | Propiedades Input, extiende de la interface TextFieldProps omitiendo eventos que se usan en componente por defecto |
+| multiple           | boolean, multipleProps      | {}                | Permite seleccionar multiples opciones. La propiedad `returnObject` es ignorada al emitir los datos seleccionados |
+| onInputClear       | () => void                  |                   | Función que se ejecuta cuando se limpia el input text |
+| openOnClear        | boolean                     | false             | Abre el `ListBox` del `Autocompletar` al limpiar el input |
+| onSelected         | () => void                  | () => {}          | Función que se ejecuta con el valor seleccionado |
+| panelWidth         | number, string              |                   | Ancho panel de lista con los datos  |
+| renderText         | (obj: DataSource) => string | (obj) => obj.text | Función que renderiza el texto del elemento ListItem y el texto al seleccionar, por defecto el valor en service.dataValueText |
+| returnObject       | boolean                     | false             | Retorna el objeto original cuando los datos provienen de un servicio HTTP en una propiedad llamada `original`. |
+| service            | ServiceProps                | {}                | Propiedades del servicio HTTP. |
+| value              | string                      | ''                | Valor por defecto en el input text. Si el autocompletar está configurado para ejecutarse una vez o contiene datos iniciales, se asignará el primer valor que coincida con el id en la fuente de datos, de lo contrario se asigna el texto correspondiente. |
 
 
 ## Service Props
 
 | Nombre              | Tipo        | Valor por defecto                   | Descripción |
 |---------------------|-------------|-------------------------------------|-------------|
+| dataId              | string &#124; number |                            | Se utiliza para asignar la propiedad key de los items cuando la propiedad value se repite en mas de un item |
 | dataText            | string      | 'text'                              | Texto a mostrar en el elemento de la lista |
 | dataValue           | string      | 'value'                             | Valor del elemento de la lista.  |
 | executeOne          | boolean     | false                               | Ejecutar el servicio una unica vez, cuando el componente es montado |

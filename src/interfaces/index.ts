@@ -1,4 +1,4 @@
-export {
+export type {
   DataSource,
   Params,
   Service,
@@ -6,7 +6,7 @@ export {
   ToDataSource
 } from './base'
 
-export {
+export type {
   Fn,
   KeyValuePair
 } from './utils'

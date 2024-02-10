@@ -62,10 +62,10 @@ const resolveToken = () => {
 }
 
 const resolveURL = (): string => {
-  if (process.env.NODE_ENV === 'production')
+  if (import.meta.env.PROD)
     return tryGetURL()
 
-  return process.env.HOST || ''
+  return import.meta.env.VITE_HOST || ''
 }
 
 const resolveVersionErp = () => {
@@ -80,7 +80,7 @@ const __AYF: AYF = {
   APP_NAME: packageJson.name || 'configuracion',
   APP_VERSION: packageJson.version,
   BASE_URL: baseUrl,
-  BUILD_MODE_PRODUCTION: process.env.NODE_ENV === 'production',
+  BUILD_MODE_PRODUCTION: import.meta.env.PROD,
   SITE_URL: siteUrl,
   TOKEN: resolveToken(),
   VERSION_ERP: versionErp

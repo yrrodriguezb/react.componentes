@@ -1,12 +1,11 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import  TablaFiltro, { TablaFiltroProps } from "../../../componentes/Base/TablaFiltro";
+import  TablaFiltro from "../../../src/componentes/Base/TablaFiltro";
 import { dataSource } from "../../data/base/DataSource";
-import apiMock from "../../../utils/api";
-import { act } from "react-dom/test-utils";
+import apiMock from "../../../src/utils/api";
 
 const testidComponent = "root";
 
-jest.mock('../../../utils/api', () => ({
+jest.mock('../../../src/utils/api', () => ({
   get: jest.fn()
 }));
 

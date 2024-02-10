@@ -1,10 +1,11 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "baseUrl": "./src",
+    "target": "ES2020",
     "lib": [
+      "ES2020",
       "dom",
       "dom.iterable",
-      "esnext"
     ],
     "allowJs": true,
     "skipLibCheck": true,
@@ -13,7 +14,7 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
+    "module": "ESNext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "jsx": "react-jsx",
@@ -23,31 +24,31 @@
     "declaration": true,
     "typeRoots": [
       "./node_modules/@types",
-      "./types"
+      "./types",
     ],
-
-    "baseUrl": "https://github.com/yrrodriguezb/react.componentes",
-    "paths": {
-      "@yrrodriguezb/react-components/componentes": [ "./src/componentes" ],
-      "@yrrodriguezb/react-components/componentes/*": [ "./src/componentes/*" ],
-      "@yrrodriguezb/react-components/hooks": [ "./src/hooks" ],
-      "@yrrodriguezb/react-components/hooks/*": [ "./src/hooks/*" ],
-      "@yrrodriguezb/react-components/utils": [ "./src/utils" ],
-      "@yrrodriguezb/react-components/utils/*": [ "./src/utils/*" ]
-    }
+    "useDefineForClassFields": true,
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   },
   "exclude": [
     "node_modules",
-    "src/test/*",
     "dist"
   ],
   "include": [
     "src",
-    "types"
+    "types",
+    "tests",
+    "src/**/*.json",
   ],
   "ts-node": {
     "compilerOptions": {
-      "module": "CommonJS"
+      "module": "ES2020",
+      "noUnusedLocals": true,
+      "noUnusedParameters": true
     }
   },
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -1,13 +1,14 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import Autocompletar from "../../../componentes/Base/Autocompletar";
+import Autocompletar from "../../../src/componentes/Base/Autocompletar";
 import { countryListTop10, dataSource, numbers } from "../../data";
-import apiMock from '../../../utils/api'
-import { normalizeString } from "../../../utils/fn";
+import apiMock from '../../../src/utils/api'
+import { normalizeString } from "../../../src/utils/fn";
 import { ReactMuiRole } from "../../utils/enum/mui/roles";
-import { DataSource } from "../../../interfaces";
+import { DataSource } from "../../../src/interfaces";
+import { EMPTY } from "../../../src/utils";
 
 
-jest.mock('../../../utils/api', () => ({
+jest.mock('../../../src/utils/api', () => ({
   get: jest.fn()
 }));
 
@@ -291,4 +292,107 @@ describe("Pruebas en <Autocompletar />", () => {
     const input = screen.getByRole(ReactMuiRole.TextBox);
     expect(input).toHaveValue(value);
   });
+
+  test('Debe limpiar el input al seleccionar un item', async () => {
+    const onSelected = jest.fn();
+
+    render(
+      <Autocompletar
+        data={ dataSource }
+        onSelected={ onSelected }
+        clearInputOnSelect
+      />
+    )
+
+    let items: HTMLElement[] = [];
+    const input: HTMLElement | null = screen.getByRole(ReactMuiRole.TextBox);
+
+    fireEvent.focusIn(input);
+    items = await screen.findAllByRole(ReactMuiRole.ListItem);
+    fireEvent.mouseDown(items[0]);
+    expect(onSelected).toHaveBeenCalledWith(dataSource[0]);
+    expect(input).toHaveValue(EMPTY);
+    fireEvent.blur(input);
+
+    onSelected.mockClear();
+
+    fireEvent.focusIn(input);
+    items = await screen.findAllByRole(ReactMuiRole.ListItem);
+    fireEvent.mouseDown(items[items.length - 1]);
+    expect(onSelected).toHaveBeenCalledWith(dataSource[dataSource.length - 1]);
+    expect(input).toHaveValue(EMPTY);
+  });
+
+  test("Debe filtrar los datos ségun la propiedad filter", async () => {
+    const customFilter = (pattern: string, obj: DataSource) => {
+      const _value = normalizeString(obj.value);
+      return _value.includes(pattern) && obj.text.startsWith("An");
+    }
+
+    const filterMock = jest.fn(customFilter);
+
+    render(<Autocompletar
+      data={ countryListTop10 }
+      filter={ filterMock }
+    />)
+
+    const pattern = "a";
+    const element: HTMLElement | null = screen.getByRole(ReactMuiRole.TextBox);
+    fireEvent.change(element, { target: { value: pattern } });
+
+    await waitFor(() => expect(filterMock).toHaveBeenCalled(), optionsWaitFor);
+    expect(filterMock).toHaveBeenCalledTimes(countryListTop10.length)
+
+    const filterData = countryListTop10.filter(c => customFilter(pattern, { value: c, text: c }));
+    const results = filterMock.mock.results.filter(r => r.value);
+    expect(filterData.length).toBe(results.length);
+  });
+
+  test("Debe ejecutar la funcion onInputClear si el valor del input es vacio", async () => {
+    const onInputClear = jest.fn();
+
+    render(<Autocompletar
+      clearable
+      data={ countryListTop10 }
+      executeInputClearIfEmpty
+      onInputClear={ onInputClear }
+    />)
+
+    const input: HTMLElement | null = screen.getByRole(ReactMuiRole.TextBox);
+
+    fireEvent.change(input, { target: { value: "pruebas" } });
+    fireEvent.change(input, { target: { value: "" } });
+    await waitFor(() => expect(onInputClear).toHaveBeenCalledTimes(1), optionsWaitFor)
+
+    fireEvent.change(input, { target: { value: "pruebas" } });
+    const clearButton =  screen.getByRole(ReactMuiRole.ClearButton);
+    expect(clearButton).toBeVisible();
+    fireEvent.mouseDown(clearButton);
+    expect(onInputClear).toHaveBeenCalledTimes(2);
+  });
+
+  test('Debe emitir el valor seleccionado solo una vez al hacer clic en el mismo item varias veces', async () => {
+    const onSelected = jest.fn();
+
+    render(<Autocompletar
+      data={ countryListTop10 }
+      onSelected={ onSelected }
+    />);
+
+    const validate = async (el: HTMLElement, indexItem: number) => {
+      fireEvent.focusIn(el);
+      const items = await screen.findAllByRole(ReactMuiRole.ListItem);
+      fireEvent.mouseDown(items[indexItem]);
+    }
+
+    const input: HTMLElement | null = screen.getByRole(ReactMuiRole.TextBox);
+
+    await validate(input, 0);
+    await validate(input, 0);
+    await validate(input, 1);
+    await validate(input, 2);
+    await validate(input, 2);
+
+    expect(onSelected).toHaveBeenCalledTimes(3);
+  })
 })
