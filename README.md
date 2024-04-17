@@ -13,3 +13,5 @@ Libreria de componentes en React
 
   1. [Constantes](./docs/utilidades/constantes.md)
   2. [Funciones](./docs/utilidades/funciones.md)
+  3. [Cookie](./docs/utilidades/cookie/cookie.md)
+  4. [Storage](./docs/utilidades/storage/localStorage.md)

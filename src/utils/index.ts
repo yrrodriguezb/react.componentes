@@ -1,4 +1,6 @@
 import AYF_VARIABLES from './global';
+import { default as defaultCookie } from './cookie';
+import { default as defaultStorage } from './storage';
 
 import  {
   functions,
@@ -45,3 +47,9 @@ export {
 
 export * from './constantes';
 export * from './regex';
+
+export const cookie = defaultCookie;
+export * from './cookie';
+
+export const storage = defaultStorage;
+export * from './storage';
