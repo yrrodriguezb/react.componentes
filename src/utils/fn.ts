@@ -21,6 +21,18 @@ export function isNotEmptyObject(obj: any) {
   return !isEmptyObject(obj)
 }
 
+export function isEmpty(value: any) {
+  if (value === 'string') {
+    return value.trim().length === 0;
+  }
+
+  return typeof value === 'undefined' || value === null;
+}
+
+export function isNotEmpty(value: any) {
+  return !isEmpty(value);
+}
+
 export function isFunction(obj: any) {
   return typeof obj === "function" && obj instanceof Function;
 };

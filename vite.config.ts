@@ -30,13 +30,15 @@ export default defineConfig({
     lib: {
       name: "lib",
       entry: resolve(__dirname, './src/index.ts'),
-      formats: [ 'es', 'cjs' ],
+      formats: [ 'es' ],
       fileName: "lib"
     },
     rollupOptions: {
       input: {
         index: './src/index.ts',
-        componentes: './src/componentes/index.ts'
+        componentes: './src/componentes/index.ts',
+        hooks: './src/hooks/index.ts',
+        utils: './src/utils/index.ts'
       },
       external: [...Object.keys(peerDependencies)],
       output: {

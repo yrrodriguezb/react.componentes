@@ -169,7 +169,10 @@ const InputText = React.forwardRef<InputTextRef, TextProps>((inProps, ref) => {
   return (
     <TextField
       size="small"
-      sx={{ backgroundColor: 'white' }}
+      sx={{
+        '& .MuiInputBase-root': { background: 'white' },
+        '& .MuiFormHelperText-root': { background: 'transparent' }
+      }}
       { ...props }
       { ...inputProps }
       autoComplete='off'
@@ -349,26 +352,6 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     }, 0);
   }, [ assignFocus, openOnClear ]);
 
-  const generateGetBoundingClientRect = (x:number = 0, y:number = 0) => {
-    const attrs = anchorEl?.getBoundingClientRect();
-    const inputAttrs = inputRef.current?.getBoundingClientRect();
-
-    return () => ({
-      width: attrs?.width || 0,
-      height: inputAttrs?.height || 0,
-      top:  attrs?.top || y,
-      right: attrs?.right || x,
-      bottom: attrs?.bottom || y,
-      left: attrs?.left || x,
-      x: attrs?.x || x,
-      y: attrs?.x || y
-    } as DOMRect);
-  }
-
-  const virtualElement = {
-    getBoundingClientRect: generateGetBoundingClientRect(),
-  };
-
   const request = async (url: string, params: object) => {
     return api.get(url, { params });
   };
@@ -528,6 +511,15 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
     }
   }
 
+  const handleOnSelected = (obj: DataSource) => {
+    const newObj: DataSource = { ...obj }
+    if (!multiple) {
+      newObj.text = renderText(obj);
+    }
+
+    onSelected(newObj);
+  }
+
   const resolveData = () => {
     if (executeOnFirstFocus) {
       // Si el input text tiene valor y encontro datos, devuelve los datos de la ultima consulta
@@ -616,8 +608,7 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
       }
 
       lastValueSelected.current = obj;
-
-      onSelected(obj);
+      handleOnSelected(obj);
       assignInputValue(obj);
 
       if (clearInputOnSelect) {
@@ -642,12 +633,17 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
 
     if (obj) {
       lastValueSelected.current = obj;
-      onSelected(obj);
+      handleOnSelected(obj);
       assignInputValue(obj);
     }
   }
 
   const handleInputBlur = (event: any) => {
+    if (loading && document.activeElement?.contains(inputRef.current)) {
+      inputRef.current?.focus();
+      return;
+    }
+
     cursorRef.current = cursorPrevRef.current = -1;
     if (isActiveElementInListbox(listRef)){
       inputRef.current?.focus();
@@ -764,12 +760,12 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   }
 
   const handleInputFocus = () => {
-    if (!anchorEl) {
-      setAnchorEl(rootRef.current);
+    if (state.open || !document.activeElement?.contains(inputRef.current)) {
+      return;
     }
 
-    if (state.open) {
-      return;
+    if (!anchorEl) {
+      setAnchorEl(rootRef.current);
     }
 
     setLoading(true);
@@ -861,6 +857,11 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
   }
 
   const handleClick = (event: any) => {
+    //  No permite abrir el listbox si el foco no esta en el input del autocompletar
+    if (!document.activeElement?.contains(inputRef.current)) {
+      return;
+    }
+
     // Se agrega inputProps.disabled, ya que cuando se desabilita el control desde el icono de buscar permite abrir el listbox
     if (!event.currentTarget.contains(event.target) || inputProps?.disabled) {
       return;
@@ -1044,7 +1045,7 @@ export const Autocompletar = (inProps: AutocompletarProps) => {
 
       {
         state.open && (
-          <Popper open={ openPoper } anchorEl={ virtualElement } role='presentation' disablePortal={ disablePortal } sx={{ zIndex: 'modal' }}>
+          <Popper open={ openPoper } anchorEl={ anchorEl } role='presentation' disablePortal={ disablePortal } sx={{ zIndex: 'modal' }}>
             <Fade in unmountOnExit style={{ zIndex: 'modal' }}>
               <Stack sx={{ ...getListContainerProps() }}>
                 { loading ?

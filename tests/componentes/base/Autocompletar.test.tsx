@@ -188,9 +188,12 @@ describe("Pruebas en <Autocompletar />", () => {
     })
 
     fireEvent.mouseDown(checkboxList[0]);
-    fireEvent.blur(element)
 
-    expect(selected).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      fireEvent.blur(element)
+      expect(selected).toHaveBeenCalledTimes(1);
+    })
+
     expect(selected).toHaveBeenCalledWith(emittedData);
   });
 
